@@ -15,25 +15,36 @@ sub OpChoice;
 sub ParseQPFile;
 sub SimChoice;
 
+# INPUT YOUR VARIABLES HERE
 #--------------------------------------------------------------------------
 #input dirs - no trailing \ please!!!!
 $INPUTFILE = $ARGV[0];
-$INPUTDIR1 = 'F:\Arcade\TRANSIT\UNZIP\MAMESCREENIES';
-$INPUTDIR2 = 'F:\Arcade\SCREENSHOTS\FBA_nonMAME_screenshots';
-$INPUTDIR3 = 'F:\Sega Games\HazeMD\HazeMD\snap';
-$INPUTDIR4 = 'F:\Arcade\SCREENSHOTS\Winkawaks_NONMAME_screenshots';
+@INPUTDIR = (
+	'F:\Arcade\TRANSIT\UNZIP\MAMESCREENIES',
+	'F:\Arcade\SCREENSHOTS\FBA_nonMAME_screenshots',
+	'F:\Sega Games\HazeMD\HazeMD\snap',
+	'F:\Arcade\SCREENSHOTS\Winkawaks_NONMAME_screenshots',
+);
+#Output dir
+$OUTDIR = "F:\\Arcade\\TRANSIT";
+#--------------------------------------------------------------------------
 
+
+print "\n\n" . "*"x30 . "\n\n Romdata Asset Matching Tool\n\n" . "*"x30 . "\n\n";
 #Say what you see...
-if ($INPUTFILE == '') { die "Quiting - You didn't pass me an input file"; }
-print "You passed me $INPUTFILE\n";
+$INPUTFILE eq ''? die "Quiting - You didn't pass me an input file" : print "Input file set to:\n $INPUTFILE\n\n"; 
+$OUTDIR eq ''? die "Quiting - You didn't program an output dir" : print "Output directory set to:\n $OUTDIR\n\n";
+
+if (scalar @INPUTDIR == 0) { die "Quiting - You didn't pass me any input directories"; }
+else { foreach $index ( 0 .. $#INPUTDIR ) { print "Input directory $index set to $INPUTDIR[$index]\n"; } }
 
 #Ask what we're doing
 OpChoice;
 SimChoice;
 
-#Output dir and log named according to opType - no illegal characters please
-$OUTDIR = "F:\\Arcade\\TRANSIT";
+#Output dir and log named according to opType
 $OUTPUTDIR = "$OUTDIR\\$opType";
+
 
 if ($copy) { make_path $OUTPUTDIR;}
 if ($copy) { make_path "$OUTPUTDIR\\Parentchild";} # make this dir for image types in case we need it later
@@ -58,7 +69,7 @@ sub OpChoice {
 
 my @menu_array=("Roms","Screens","Titles","Icons");
 
-print "What do you want to compare?\n";
+print "\nWhat do you want to compare?\n";
 for ($index=0;$index<$#menu_array+1;$index++){ print "\n\t$index)$menu_array[$index]\n"; }
 $menu_item = <STDIN>;
 
@@ -113,15 +124,15 @@ sub ParseQPFile
 			
 			$OUTPUTDIR = "$OUTDIR\\$opType"; #previous image may have changed the output dir to \\parentchild
 			
-			$path1 = "$INPUTDIR1\\$mameName$fileType";			
-			$path2 = "$INPUTDIR2\\$mameName$fileType";
-			$path3 = "$INPUTDIR3\\$mameName$fileType";
-			$path4 = "$INPUTDIR4\\$mameName$fileType";
+			$path1 = "$INPUTDIR[0]\\$mameName$fileType";			
+			$path2 = "$INPUTDIR[1]\\$mameName$fileType";
+			$path3 = "$INPUTDIR[2]\\$mameName$fileType";
+			$path4 = "$INPUTDIR[3]\\$mameName$fileType";
 			#if its not held as the mamename, we try the parent name. this may be blank....
-			$path5 = "$INPUTDIR1\\$mameParent$fileType";
-			$path6 = "$INPUTDIR2\\$mameParent$fileType";
-			$path7 = "$INPUTDIR3\\$mameParent$fileType";
-			$path8 = "$INPUTDIR4\\$mameParent$fileType";
+			$path5 = "$INPUTDIR[0]\\$mameParent$fileType";
+			$path6 = "$INPUTDIR[1]\\$mameParent$fileType";
+			$path7 = "$INPUTDIR[2]\\$mameParent$fileType";
+			$path8 = "$INPUTDIR[3]\\$mameParent$fileType";
 			
 			if 	  ($path1 ne '' && -e $path1) {$there ++; $foundPath = $path1;  printf HAVEFILE  ("%-15s %-15s %-25s %-15s", "$mameName", "Found", "Child is in path1"," = $path1\n"); } 
 			elsif ($path2 ne '' && -e $path2) {$there ++; $foundPath = $path2;	printf HAVEFILE  ("%-15s %-15s %-25s %-15s", "$mameName", "Found", "Child is in path2"," = $path2\n"); } 
