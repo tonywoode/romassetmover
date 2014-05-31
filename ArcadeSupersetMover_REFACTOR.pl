@@ -17,7 +17,7 @@ sub OpenFileDirs;
 sub ParseQPFile;
 
 $INPUTFILE = $ARGV[0];
-# INPUT YOUR VARIABLES HERE
+# INPUT YOUR DIRECTORIES HERE
 #--------------------------------------------------------------------------
 @INPUTDIR = ( #input dirs - no trailing \ please!!!!
 	'F:\Arcade\TRANSIT\UNZIP\MAMESCREENIES',
@@ -86,7 +86,7 @@ if ($copy) { make_path "$OUTPUTDIR\\Parentchild";} # make this dir for image typ
 $HAVEFILE = "$OUTDIR\\Have$opType.txt";
 $PARENTCHILDFILE = "$OUTDIR\\ParentChild$opType.txt";
 $MISSFILE = "$OUTDIR\\Miss$opType.txt";
-$QPS = chr(172); #Quickplay's separator is ¬
+
 
 open(QPDATFILE, $INPUTFILE) or die "Cannot open Quickplay dat file\n";
 open(HAVEFILE, ">$HAVEFILE");
@@ -96,15 +96,17 @@ open(MISSFILE, ">$MISSFILE");
 
 #------------------------------------------------------------------------
 sub ParseQPFile {
-	# check QP Data file is valid
 	$line=<QPDATFILE>;
 	chomp $line;
-	die "Quickplay data file not valid\n" if (not $line =~ /ROM DataFile Version : /);
-
+	die "Quickplay data file not valid\n" if (not $line =~ /ROM DataFile Version : /); # check QP Data file is valid
+	$QPS = chr(172); #Quickplay's separator is ¬
+	$qp_pattern = "([^$QPS]*)$QPS"; #...so a Quickplay romdata entry consists of this pattern... 
+	$qp_line = "$qpPattern"x19; #...thus a line of Quickplay romdata consits of that entry repeated 19 times
+	
 	while ($line=<QPDATFILE>)
 	{
 		chomp $line;
-		if ($line =~ /^([^$QPS]*)$QPS([^$QPS]*)$QPS([^$QPS]*)$QPS([^$QPS]*)$QPS([^$QPS]*)$QPS([^$QPS]*)$QPS([^$QPS]*)$QPS([^$QPS]*)$QPS([^$QPS]*)$QPS([^$QPS]*)$QPS([^$QPS]*)$QPS([^$QPS]*)$QPS([^$QPS]*)$QPS([^$QPS]*)$QPS([^$QPS]*)$QPS([^$QPS]*)$QPS([^$QPS]*)$QPS([^$QPS]*)$QPS([^$QPS]*)$QPS/)
+		if ($line =~ /^$qp_line/)
 		{
 			$mameName = $2; #mamename
 			$mameParent = $3; #parent romname
