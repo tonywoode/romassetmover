@@ -1,6 +1,4 @@
-#!/usr/bin/perl
-#use strict;
-#use warnings;
+#!/usr/bin/perl -w
 #
 # This program takes a quickplay datfile, and a collection of directory paths where mame assets are, as inputs. In order, it tries to find the mame names of the
 # items in the datfile in each path. It can then copy the assets found to an output dir.
@@ -9,43 +7,80 @@
 # be helpful so its stored in a subfolder. It certainly ISN'T helpful for the ROM itself so we turn it off (we don't want Street Fighter 2 Brazil to turn out to be Street Fighter 2 World - the
 # point of the parent/child relationship is to ditinguish them)
 
+#use strict;
+#use warnings;
 use File::Copy qw(copy);
 use File::Path qw(make_path);
 sub OpChoice;
-sub ParseQPFile;
 sub SimChoice;
+sub OpenFileDirs;
+sub ParseQPFile;
 
+$INPUTFILE = $ARGV[0];
 # INPUT YOUR VARIABLES HERE
 #--------------------------------------------------------------------------
-#input dirs - no trailing \ please!!!!
-$INPUTFILE = $ARGV[0];
-@INPUTDIR = (
+@INPUTDIR = ( #input dirs - no trailing \ please!!!!
 	'F:\Arcade\TRANSIT\UNZIP\MAMESCREENIES',
 	'F:\Arcade\SCREENSHOTS\FBA_nonMAME_screenshots',
 	'F:\Sega Games\HazeMD\HazeMD\snap',
 	'F:\Arcade\SCREENSHOTS\Winkawaks_NONMAME_screenshots',
 );
-#Output dir
-$OUTDIR = "F:\\Arcade\\TRANSIT";
+$OUTDIR = "F:\\Arcade\\TRANSIT"; #Output dir
 #--------------------------------------------------------------------------
 
 
 print "\n\n" . "*"x30 . "\n\n Romdata Asset Matching Tool\n\n" . "*"x30 . "\n\n";
-#Say what you see...
 $INPUTFILE eq ''? die "Quiting - You didn't pass me an input file" : print "Input file set to:\n $INPUTFILE\n\n"; 
 $OUTDIR eq ''? die "Quiting - You didn't program an output dir" : print "Output directory set to:\n $OUTDIR\n\n";
-
 if (scalar @INPUTDIR == 0) { die "Quiting - You didn't pass me any input directories"; }
 else { foreach $index ( 0 .. $#INPUTDIR ) { print "Input directory $index set to $INPUTDIR[$index]\n"; } }
 
 #Ask what we're doing
 OpChoice;
 SimChoice;
+OpenFileDirs;
+ParseQPFile;
 
-#Output dir and log named according to opType
-$OUTPUTDIR = "$OUTDIR\\$opType";
 
+#Subroutines
+#------------------------------------------------------------------------
+sub OpChoice { #What are we doing and what filetype does that mean we'll look for?
+my @menu_array=("Roms","Screens","Titles","Icons");
+print "\nWhat do you want to compare?\n";
+for ($index=0;$index<$#menu_array+1;$index++){ print "\n\t$index)$menu_array[$index]\n"; }
+$menu_item = <STDIN>;
+if ($menu_item =~ /^[\+]?[0-3]*\.?[0-3]*$/ && $menu_item !~ /^[\. ]*$/ ) { #if its a number between 0 and 3
+	$opType = $menu_array[$menu_item]; print "\nYou chose $opType\t"; } #We get our operation type...
+else { die "\nNo, that's not sensible. Try again with a choice that's in the menu\n"; }
+	
+%fileTypes = (
+	"Roms"   => ".zip",
+	"Screens" => ".png",
+	"Titles"   => ".png",
+	"Icons" => ".ico",
+);	
 
+$fileType = $fileTypes{$opType};
+$OUTPUTDIR = "$OUTDIR\\$opType"; #SET THE OUTPUT DIRECTORY BASED ON OPTYPE NAME
+print "So I'm going to look for:\t$fileType\n\n";
+}
+
+#---------------------------------------------------------------------------
+sub SimChoice { #Give user choice of behaviour
+	print "Simulate by default (just hit return), or enter '1' now to COPY\t";	
+	CHOICE: while ( $copy = <STDIN> ) {
+			chomp($copy);
+			if ( ( uc($copy) eq uc("1") ) || ( $copy eq "" ) ) 
+				{ last CHOICE ; }
+			else {
+				print "\nYou typed:\t$copy.\n\nTry again - type either \"1\" or press Return:\t\n\n";
+				announce;
+				}
+			}	
+}
+
+#------------------------------------------------------------------------
+sub OpenFileDirs {
 if ($copy) { make_path $OUTPUTDIR;}
 if ($copy) { make_path "$OUTPUTDIR\\Parentchild";} # make this dir for image types in case we need it later
 $HAVEFILE = "$OUTDIR\\Have$opType.txt";
@@ -57,58 +92,10 @@ open(QPDATFILE, $INPUTFILE) or die "Cannot open Quickplay dat file\n";
 open(HAVEFILE, ">$HAVEFILE");
 open(PARENTCHILDFILE, ">$PARENTCHILDFILE");
 open(MISSFILE, ">$MISSFILE");
-
-ParseQPFile;
-
-
-#Subroutines
-
-#------------------------------------------------------------------------
-sub OpChoice {
-#What are we doing and what filetype is it?
-
-my @menu_array=("Roms","Screens","Titles","Icons");
-
-print "\nWhat do you want to compare?\n";
-for ($index=0;$index<$#menu_array+1;$index++){ print "\n\t$index)$menu_array[$index]\n"; }
-$menu_item = <STDIN>;
-
-if ($menu_item =~ /^[\+]?[0-3]*\.?[0-3]*$/ && $menu_item !~ /^[\. ]*$/ ) {
-	$opType = $menu_array[$menu_item]; #now we have operation type...
-	print "\nYou chose $opType\t";
-	}
-else { die "\nNo, that's not sensible. Try again with a choice that's in the menu\n"; }
-	
-%fileTypes = (
-	"Roms"   => ".zip",
-	"Screens" => ".png",
-	"Titles"   => ".png",
-	"Icons" => ".ico",
-);	
-
-$fileType = $fileTypes{$opType};
-print "So I'm going to look for:\t$fileType\n\n\n";
-}
-
-#---------------------------------------------------------------------------
-#Give user choice of behaviour
-sub SimChoice {
-	print "Simulate by default, or press 1 to copy.\nIf you want that, enter '1' now, otherwise hit return\t";	
-	CHOICE: while ( $copy = <STDIN> )
-		{
-			chomp($copy);
-			if ( ( uc($copy) eq uc("1") ) || ( $copy eq "" ) ) 
-				{ last CHOICE ; }
-			else {
-				print "\nYou typed:\t$AllRoms.\n\nTry again - type either \"1\" or press Return:\t\n\n";
-				announce;
-				}
-		}
 }
 
 #------------------------------------------------------------------------
-sub ParseQPFile
-{
+sub ParseQPFile {
 	# check QP Data file is valid
 	$line=<QPDATFILE>;
 	chomp $line;
@@ -154,8 +141,11 @@ sub ParseQPFile
 		}
 		
 	}
-	print "\nnumber of mamegames present as child or parent = $there";
-	print "\nnumber of files not present = $notThere";
+	#print "\nnumber of mamegames present as child or parent = $there";
+	printf "%-50s %10u", "\nnumber of mamenames present as child or parent:\t", (defined $there ? "$there" : "0");
+	#defined $notThere ? print "\nnumber of files not present = $notThere" : print "\nNo files not found" ;
+	printf "%-46s %10u", "\nNumber of mamenames not found:\t", (defined $notThere ? "$notThere" : "0");
+
 	close(HAVEFILE);
 	close(PARENTCHILD);
 	close(MISSFILE);
