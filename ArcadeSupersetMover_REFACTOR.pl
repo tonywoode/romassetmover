@@ -101,7 +101,7 @@ sub ParseQPFile {
 	die "Quickplay data file not valid\n" if (not $line =~ /ROM DataFile Version : /); # check QP Data file is valid
 	$QPS = chr(172); #Quickplay's separator is ¬
 	$qp_pattern = "([^$QPS]*)$QPS"; #...so a Quickplay romdata entry consists of this pattern... 
-	$qp_line = "$qpPattern"x19; #...thus a line of Quickplay romdata consits of that entry repeated 19 times
+	$qp_line = "$qp_pattern"x19; #...thus a line of Quickplay romdata consits of that entry repeated 19 times
 	
 	while ($line=<QPDATFILE>)
 	{
