@@ -111,10 +111,11 @@ sub ParseQPFile {
 			
 			$outputdir = "$outdir\\$opType"; #previous image may have changed the output dir to \\parentchild
 			
-			my @search_path, @parent_search_path;
+			my @search_path;
+			my @parent_search_path;
 			if ($mameName ne '' )   { foreach my $path ( 0 .. $#inputdir ) { push (@search_path, "$inputdir[$path]\\$mameName$fileType"); } }
 			if ($mameParent ne '')  { foreach my $path ( 0 .. $#inputdir ) { push (@parent_search_path, "$inputdir[$path]\\$mameParent$fileType"); } }
-			
+			#print @parent_search_path;
 			
 			##that should get rid of this lot
 			#$path1 = "$inputdir[0]\\$mameName$fileType";			
@@ -128,33 +129,31 @@ sub ParseQPFile {
 			#$path8 = "$inputdir[3]\\$mameParent$fileType";
 			
 			
-			
-			
+
 			foreach my $path ( 0 .. $#search_path  ) {
-				$found = 0;
+			#print "rom = $mameName, search path = $search_path[$path], path = $path\n" ;
 				if ($search_path[$path] ne '' && -e $search_path[$path] ) {
-				$found = 1;
 				$there ++; 
 				$foundPath = $search_path[$path];  
-				$pathno = $path+1;
+				my $pathno = $path+1;
 				printf HAVEFILE  ("%-15s %-15s %-25s %-15s", "$mameName", "Found", "Child is in path$pathno"," = $search_path[$path]\n"); 
 				last; }
 				} 
 				
-				print $found, $opType;
-			if ( $found == 0 && $opType ne 'Roms' ) {
-			print "oh hi";
-				foreach my $path ( 0 .. $#parent_search_path ) {
-					if ($parent_search_path[$path] ne '' && -e $parent_search_path[$path]) {
-					print "hello";
+			
+			foreach $path ( 0 .. $#parent_search_path ) {
+			#print "rom = $mameName, search path = $parent_search_path[$path], path = $path\n" ;
+					if ($opType ne 'Roms' && $parent_search_path[$path] ne '' && -e $parent_search_path[$path]) {
 					$there ++; 
-					$foundPath = $parent_search_path[$path]; 
+					$foundPath = $parent_search_path[$path];
+					my $pathno = $path+5;					
 					$outputdir = "$outputdir\\parentchild";					
-					printf PARENTCHILDFILE ("%-15s %-15s %-25s %-15s", "$mameName", "Missing", "Parent is in path$path"," = $parent_search_path[$path]\n"); 
+					printf PARENTCHILDFILE ("%-15s %-15s %-25s %-15s", "$mameName", "Missing", "Parent is in path$pathno"," = $parent_search_path[$path]\n"); 
 					last; }
 				}
-			}				
-			
+						
+						
+			if ($foundPath eq '') { print "I didn't find it"; }
 			
 			#if 	  ($path1 ne '' && -e $path1) {$there ++; $foundPath = $path1;  printf HAVEFILE  ("%-15s %-15s %-25s %-15s", "$mameName", "Found", "Child is in path1"," = $path1\n"); } 
 			#elsif ($path2 ne '' && -e $path2) {$there ++; $foundPath = $path2;	printf HAVEFILE  ("%-15s %-15s %-25s %-15s", "$mameName", "Found", "Child is in path2"," = $path2\n"); } 
