@@ -71,11 +71,10 @@ sub SimChoice { #Give user choice of behaviour
 	CHOICE: while ( $copy = <STDIN> ) {
 			chomp($copy);
 			if ( ( uc($copy) eq uc("1") ) || ( $copy eq "" ) ) 
-				{ last CHOICE ; }
+				 { last CHOICE ; }
 			else {
-				print "\nYou typed:\t$copy.\n\nTry again - type either \"1\" or press Return:\t\n\n";
-				announce;
-				}
+				  print "\nYou typed:\t$copy.\n\nTry again - type either \"1\" or press Return:\t\n\n";
+				 }
 			}	
 }
 
@@ -112,52 +111,73 @@ sub ParseQPFile {
 			
 			$outputdir = "$outdir\\$opType"; #previous image may have changed the output dir to \\parentchild
 			
-			#foreach my $path ( 0 .. $#inputdir ) { push (@search_path, "$inputdir[$path]\\$mameName$fileType"); }
-			#foreach my $path ( 0 .. $#inputdir ) { push (@parent_search_path, "$inputdir[$path]\\$mameParent$fileType"); } 
-			
-			#that should get rid of this lot
-			$path1 = "$inputdir[0]\\$mameName$fileType";			
-			$path2 = "$inputdir[1]\\$mameName$fileType";
-			$path3 = "$inputdir[2]\\$mameName$fileType";
-			$path4 = "$inputdir[3]\\$mameName$fileType";
-			#if its not held as the mamename, we try the parent name. this may be blank....
-			$path5 = "$inputdir[0]\\$mameParent$fileType";
-			$path6 = "$inputdir[1]\\$mameParent$fileType";
-			$path7 = "$inputdir[2]\\$mameParent$fileType";
-			$path8 = "$inputdir[3]\\$mameParent$fileType";
+			my @search_path, @parent_search_path;
+			if ($mameName ne '' )   { foreach my $path ( 0 .. $#inputdir ) { push (@search_path, "$inputdir[$path]\\$mameName$fileType"); } }
+			if ($mameParent ne '')  { foreach my $path ( 0 .. $#inputdir ) { push (@parent_search_path, "$inputdir[$path]\\$mameParent$fileType"); } }
 			
 			
-			
-			#foreach my $path ( 0 .. $#search_path  ) {
-			#	if ($search_path ne '' && -e $search_path) {$there ++; $foundPath = $search_path;  printf HAVEFILE  ("%-15s %-15s %-25s %-15s", "$mameName", "Found", "Child is in $path"," = $search_path\n"); 
-			#	if -e $search_path ( last );
-			#	} 
+			##that should get rid of this lot
+			#$path1 = "$inputdir[0]\\$mameName$fileType";			
+			#$path2 = "$inputdir[1]\\$mameName$fileType";
+			#$path3 = "$inputdir[2]\\$mameName$fileType";
+			#$path4 = "$inputdir[3]\\$mameName$fileType";
+			##if its not held as the mamename, we try the parent name. this may be blank....
+			#$path5 = "$inputdir[0]\\$mameParent$fileType";
+			#$path6 = "$inputdir[1]\\$mameParent$fileType";
+			#$path7 = "$inputdir[2]\\$mameParent$fileType";
+			#$path8 = "$inputdir[3]\\$mameParent$fileType";
 			
 			
 			
-			if 	  ($path1 ne '' && -e $path1) {$there ++; $foundPath = $path1;  printf HAVEFILE  ("%-15s %-15s %-25s %-15s", "$mameName", "Found", "Child is in path1"," = $path1\n"); } 
-			elsif ($path2 ne '' && -e $path2) {$there ++; $foundPath = $path2;	printf HAVEFILE  ("%-15s %-15s %-25s %-15s", "$mameName", "Found", "Child is in path2"," = $path2\n"); } 
-			elsif ($path3 ne '' && -e $path3) {$there ++; $foundPath = $path3;	printf HAVEFILE  ("%-15s %-15s %-25s %-15s", "$mameName", "Found", "Child is in path3"," = $path3\n"); } 
-			elsif ($path4 ne '' && -e $path4) {$there ++; $foundPath = $path4;	printf HAVEFILE  ("%-15s %-15s %-25s %-15s", "$mameName", "Found", "Child is in path4"," = $path4\n"); } 
-			# again, try the parent if we don't find it....its the only way to be sure...but we don't want to check if parent is blank
-			# but here's the thing: do we copy the parent as the child rom's name? Theoretically we don't need, but then we WILL come across
-			# instances where the MAME parent gets renamed in a later version. We certainly don't want to copy parent ROMS with child names, that would
-			# be a disaster....lets put these in a subdir for now "parentchild"
-			elsif ($opType ne 'Roms' && $path5 ne '' && -e $path5) {$there ++; $foundPath = $path5; $outputdir = "$outputdir\\parentchild"; printf PARENTCHILDFILE ("%-15s %-15s %-25s %-15s", "$mameName", "Missing", "Parent is in path5"," = $path5\n"); }
-			elsif ($opType ne 'Roms' && $path6 ne '' && -e $path6) {$there ++; $foundPath = $path6; $outputdir = "$outputdir\\parentchild"; printf PARENTCHILDFILE ("%-15s %-15s %-25s %-15s", "$mameName", "Missing", "Parent is in path6"," = $path6\n"); }
-			elsif ($opType ne 'Roms' && $path7 ne '' && -e $path7) {$there ++; $foundPath = $path7; $outputdir = "$outputdir\\parentchild"; printf PARENTCHILDFILE ("%-15s %-15s %-25s %-15s", "$mameName", "Missing", "Parent is in path7"," = $path7\n"); }
-			elsif ($opType ne 'Roms' && $path8 ne '' && -e $path8) {$there ++; $foundPath = $path8; $outputdir = "$outputdir\\parentchild"; printf PARENTCHILDFILE ("%-15s %-15s %-25s %-15s", "$mameName", "Missing", "Parent is in path8"," = $path8\n"); }
 			
-			else { $notThere ++; print "Can't find\t=\t$mameName\n"; print MISSFILE "Can't find\t=\t$mameName\n"}
+			foreach my $path ( 0 .. $#search_path  ) {
+				$found = 0;
+				if ($search_path[$path] ne '' && -e $search_path[$path] ) {
+				$found = 1;
+				$there ++; 
+				$foundPath = $search_path[$path];  
+				$pathno = $path+1;
+				printf HAVEFILE  ("%-15s %-15s %-25s %-15s", "$mameName", "Found", "Child is in path$pathno"," = $search_path[$path]\n"); 
+				last; }
+				} 
+				
+				print $found, $opType;
+			if ( $found == 0 && $opType ne 'Roms' ) {
+			print "oh hi";
+				foreach my $path ( 0 .. $#parent_search_path ) {
+					if ($parent_search_path[$path] ne '' && -e $parent_search_path[$path]) {
+					print "hello";
+					$there ++; 
+					$foundPath = $parent_search_path[$path]; 
+					$outputdir = "$outputdir\\parentchild";					
+					printf PARENTCHILDFILE ("%-15s %-15s %-25s %-15s", "$mameName", "Missing", "Parent is in path$path"," = $parent_search_path[$path]\n"); 
+					last; }
+				}
+			}				
+			
+			
+			#if 	  ($path1 ne '' && -e $path1) {$there ++; $foundPath = $path1;  printf HAVEFILE  ("%-15s %-15s %-25s %-15s", "$mameName", "Found", "Child is in path1"," = $path1\n"); } 
+			#elsif ($path2 ne '' && -e $path2) {$there ++; $foundPath = $path2;	printf HAVEFILE  ("%-15s %-15s %-25s %-15s", "$mameName", "Found", "Child is in path2"," = $path2\n"); } 
+			#elsif ($path3 ne '' && -e $path3) {$there ++; $foundPath = $path3;	printf HAVEFILE  ("%-15s %-15s %-25s %-15s", "$mameName", "Found", "Child is in path3"," = $path3\n"); } 
+			#elsif ($path4 ne '' && -e $path4) {$there ++; $foundPath = $path4;	printf HAVEFILE  ("%-15s %-15s %-25s %-15s", "$mameName", "Found", "Child is in path4"," = $path4\n"); } 
+			## again, try the parent if we don't find it....its the only way to be sure...but we don't want to check if parent is blank
+			## but here's the thing: do we copy the parent as the child rom's name? Theoretically we don't need, but then we WILL come across
+			## instances where the MAME parent gets renamed in a later version. We certainly don't want to copy parent ROMS with child names, that would
+			## be a disaster....lets put these in a subdir for now "parentchild"
+			#elsif ($opType ne 'Roms' && $path5 ne '' && -e $path5) {$there ++; $foundPath = $path5; $outputdir = "$outputdir\\parentchild"; printf PARENTCHILDFILE ("%-15s %-15s %-25s %-15s", "$mameName", "Missing", "Parent is in path5"," = $path5\n"); }
+			#elsif ($opType ne 'Roms' && $path6 ne '' && -e $path6) {$there ++; $foundPath = $path6; $outputdir = "$outputdir\\parentchild"; printf PARENTCHILDFILE ("%-15s %-15s %-25s %-15s", "$mameName", "Missing", "Parent is in path6"," = $path6\n"); }
+			#elsif ($opType ne 'Roms' && $path7 ne '' && -e $path7) {$there ++; $foundPath = $path7; $outputdir = "$outputdir\\parentchild"; printf PARENTCHILDFILE ("%-15s %-15s %-25s %-15s", "$mameName", "Missing", "Parent is in path7"," = $path7\n"); }
+			#elsif ($opType ne 'Roms' && $path8 ne '' && -e $path8) {$there ++; $foundPath = $path8; $outputdir = "$outputdir\\parentchild"; printf PARENTCHILDFILE ("%-15s %-15s %-25s %-15s", "$mameName", "Missing", "Parent is in path8"," = $path8\n"); }
+			#
+			#else { $notThere ++; print "Can't find\t=\t$mameName\n"; print MISSFILE "Can't find\t=\t$mameName\n"}
 			
 			#now do it - we hopefully never copy a parent rom as child name....
 			if ($copy) { print HAVEFILE "Copying $foundPath to $outputdir\\$mameName$fileType\n"; copy $foundPath, "$outputdir\\$mameName$fileType"; }
 		}
 		
 	}
-	#print "\nnumber of mamegames present as child or parent = $there";
+
 	printf "%-50s %10u", "\nnumber of mamenames present as child or parent:\t", (defined $there ? "$there" : "0");
-	#defined $notThere ? print "\nnumber of files not present = $notThere" : print "\nNo files not found" ;
 	printf "%-46s %10u", "\nNumber of mamenames not found:\t", (defined $notThere ? "$notThere" : "0");
 }
 

@@ -29,13 +29,14 @@ if ($copy) { make_path "$OUTPUTDIR\\Parentchild";} # make this dir for image typ
 $HAVEFILE = "$OUTDIR\\Have$opType.txt";
 $PARENTCHILDFILE = "$OUTDIR\\ParentChild$opType.txt";
 $MISSFILE = "$OUTDIR\\Miss$opType.txt";
+$COPYFILE = "$OUTDIR\\Copy$opType.txt";
 $QPS = chr(172); #i.e.: ¬
 
 open(QPDATFILE, $ARGV[0]) or die "Cannot open Quickplay dat file\n";
 open(HAVEFILE, ">$HAVEFILE");
 open(PARENTCHILDFILE, ">$PARENTCHILDFILE");
 open(MISSFILE, ">$MISSFILE");
-
+open(COPYFILE, ">$COPYFILE");
 
 ParseQPFile;
 
@@ -108,7 +109,7 @@ sub ParseQPFile
 			else { $notThere ++; print "Can't find\t=\t$mameName\n"; print MISSFILE "Can't find\t=\t$mameName\n"}
 			
 			#now do it - we hopefully never copy a parent rom as child name....
-			if ($copy) { print HAVEFILE "Copying $foundPath to $OUTPUTDIR\\$mameName$fileType\n"; copy $foundPath, "$OUTPUTDIR\\$mameName$fileType"; }
+			if ($copy) { print COPYFILE "Copying $foundPath to $OUTPUTDIR\\$mameName$fileType\n"; copy $foundPath, "$OUTPUTDIR\\$mameName$fileType"; }
 		}
 		
 	}
@@ -117,4 +118,5 @@ sub ParseQPFile
 	close(HAVEFILE);
 	close(PARENTCHILD);
 	close(MISSFILE);
+	close(COPYFILE);
 }
