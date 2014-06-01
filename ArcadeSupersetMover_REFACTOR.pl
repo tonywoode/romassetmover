@@ -82,14 +82,12 @@ sub SimChoice { #Give user choice of behaviour
 sub OpenFileDirs {
 if ($copy) { make_path $outputdir;}
 if ($copy) { make_path "$outputdir\\Parentchild";} # make this dir for image types in case we need it later
-$havefile = "$outdir\\Have$opType.txt";
-$parentchildfile = "$outdir\\ParentChild$opType.txt";
-$missfile = "$outdir\\Miss$opType.txt";
-
 open(QPDATFILE, $inputfile) or die "Cannot open Quickplay dat file\n";
-open(HAVEFILE, ">$havefile");
-open(PARENTCHILDFILE, ">$parentchildfile");
-open(MISSFILE, ">$missfile");
+$havefile = "$outdir\\Have$opType.txt"; 				open(HAVEFILE, ">$havefile");
+$parentchildfile = "$outdir\\ParentChild$opType.txt"; 	open(PARENTCHILDFILE, ">$parentchildfile");
+$missfile = "$outdir\\Miss$opType.txt"; 				open(MISSFILE, ">$missfile");
+$copyfile = "$outdir\\Copy$opType.txt"; 				open(COPYFILE, ">$copyfile");
+
 }
 
 #------------------------------------------------------------------------
@@ -111,8 +109,7 @@ sub ParseQPFile {
 			
 			$outputdir = "$outdir\\$opType"; #previous image may have changed the output dir to \\parentchild
 			
-			my @search_path;
-			my @parent_search_path;
+			my @search_path; my @parent_search_path;
 			if ($mameName ne '' )   { foreach my $path ( 0 .. $#inputdir ) { push (@search_path, "$inputdir[$path]\\$mameName$fileType"); } }
 			if ($mameParent ne '')  { foreach my $path ( 0 .. $#inputdir ) { push (@parent_search_path, "$inputdir[$path]\\$mameParent$fileType"); } }
 			#print @parent_search_path;
@@ -128,32 +125,32 @@ sub ParseQPFile {
 			#$path7 = "$inputdir[2]\\$mameParent$fileType";
 			#$path8 = "$inputdir[3]\\$mameParent$fileType";
 			
+			$foundPath = '';
+		until ($foundPath) {
 			
-
 			foreach my $path ( 0 .. $#search_path  ) {
 			#print "rom = $mameName, search path = $search_path[$path], path = $path\n" ;
 				if ($search_path[$path] ne '' && -e $search_path[$path] ) {
 				$there ++; 
 				$foundPath = $search_path[$path];  
-				my $pathno = $path+1;
-				printf HAVEFILE  ("%-15s %-15s %-25s %-15s", "$mameName", "Found", "Child is in path$pathno"," = $search_path[$path]\n"); 
+				printf HAVEFILE  ("%-15s %-15s %-25s %-15s", "$mameName", "Found", "Child is in path$path"," = $search_path[$path]\n"); 
 				last; }
 				} 
-				
 			
-			foreach $path ( 0 .. $#parent_search_path ) {
-			#print "rom = $mameName, search path = $parent_search_path[$path], path = $path\n" ;
-					if ($opType ne 'Roms' && $parent_search_path[$path] ne '' && -e $parent_search_path[$path]) {
+			if ($foundPath eq '' && $opType ne 'Roms') {
+			foreach my $path ( 0 .. $#parent_search_path ) {
+			#print "rom = $mameParent, search path = $parent_search_path[$path], path = $path\n" ;
+					if ( $parent_search_path[$path] ne '' && -e $parent_search_path[$path]) {
 					$there ++; 
-					$foundPath = $parent_search_path[$path];
-					my $pathno = $path+5;					
+					$foundPath = $parent_search_path[$path];					
 					$outputdir = "$outputdir\\parentchild";					
-					printf PARENTCHILDFILE ("%-15s %-15s %-25s %-15s", "$mameName", "Missing", "Parent is in path$pathno"," = $parent_search_path[$path]\n"); 
+					printf PARENTCHILDFILE ("%-15s %-15s %-25s %-15s", "$mameName", "No child, but parent", "Parent is in path$path"," = $parent_search_path[$path]\n"); 
 					last; }
 				}
-						
-						
-			if ($foundPath eq '') { print "I didn't find it"; }
+			}
+		}		
+			#print "foundpath is $foundPath";			
+			if ($foundPath eq '') { $notThere ++; print "Can't find\t:\t$mameName\n"; print MISSFILE "Can't find\t=\t$mameName\n"; }
 			
 			#if 	  ($path1 ne '' && -e $path1) {$there ++; $foundPath = $path1;  printf HAVEFILE  ("%-15s %-15s %-25s %-15s", "$mameName", "Found", "Child is in path1"," = $path1\n"); } 
 			#elsif ($path2 ne '' && -e $path2) {$there ++; $foundPath = $path2;	printf HAVEFILE  ("%-15s %-15s %-25s %-15s", "$mameName", "Found", "Child is in path2"," = $path2\n"); } 
@@ -171,7 +168,7 @@ sub ParseQPFile {
 			#else { $notThere ++; print "Can't find\t=\t$mameName\n"; print MISSFILE "Can't find\t=\t$mameName\n"}
 			
 			#now do it - we hopefully never copy a parent rom as child name....
-			if ($copy) { print HAVEFILE "Copying $foundPath to $outputdir\\$mameName$fileType\n"; copy $foundPath, "$outputdir\\$mameName$fileType"; }
+			if ($copy) { print COPYFILE "Copying $foundPath to $outputdir\\$mameName$fileType\n"; copy $foundPath, "$outputdir\\$mameName$fileType"; }
 		}
 		
 	}
@@ -185,4 +182,5 @@ sub CloseFileDirs {
 	close(HAVEFILE);
 	close(PARENTCHILD);
 	close(MISSFILE);
+	close(COPYFILE);
 }
