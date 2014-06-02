@@ -11,46 +11,38 @@
 #use warnings;
 use File::Copy qw(copy);
 use File::Path qw(make_path);
-sub OpChoice;
-sub SimChoice;
-sub OpenFileDirs;
-sub ParseQPFile;
-sub CloseFileDirs;
-sub SayWhatYouSee;
 
-#--------------------------------------------------------------------------
-# INPUT YOUR DIRECTORIES HERE
+###############################################################################
+################# INPUT YOUR SEARCH DIRECTORIES HERE###########################
 
-undef $ARGV[0]? $inputfile = $ARGV[0] : $inputfile = ''; #Input file is the first cmd arg or what's here
-undef $ARGV[1]? $outdir = $ARGV[1] : $outdir = "F:\\Arcade\\TRANSIT";  #output dir is the 2nd cmd arg or what's here
+undef $ARGV[0]? $inputfile = $ARGV[0] : $inputfile = 'C:\Emulators\QUICKPLAY\qp\data\Arcade\FinalBurn Alpha\ROMDATA.dat'; #Input file is the first cmd arg or what's here
+undef $ARGV[1]? $outdir = $ARGV[1] : $outdir = 'F:\\Arcade\\TRANSIT';  #output dir is the 2nd cmd arg or what's here
 
-@inputdir = (    #input dirs - no trailing \ please!!!!
+@inputdir = ( #yes you have to set these here - search dirs - no trailing \ please!!!!
     'F:\Arcade\TRANSIT\UNZIP\MAMESCREENIES',
     'F:\Arcade\SCREENSHOTS\FBA_nonMAME_screenshots',
     'F:\Sega Games\HazeMD\HazeMD\snap',
     'F:\Arcade\SCREENSHOTS\Winkawaks_NONMAME_screenshots',
 );
+###############################################################################
+
+#say what you see...
+print "\n\n" . "*" x 30 . "\n\n Romdata Asset Matching Tool\n\n" . "*" x 30 . "\n\n";
+$inputfile eq ''? die "Quiting - You didn't set an input file" : print "Input file set to:\n $inputfile\n\n";
+$outdir    eq ''? die "Quiting - You didn't set an output dir" : print "Output directory set to:\n $outdir\n\n";
+if ( scalar @inputdir == 0 ) { die "Quiting - You didn't pass me any input directories"; }
+else { foreach $index ( 0 .. $#inputdir ) { print "Input directory $index set to $inputdir[$index]\n"; } }
+
 #--------------------------------------------------------------------------
 #Main program
-SayWhatYouSee();
 OpChoice();
 SimChoice();
 OpenFileDirs();
 ParseQPFile();
+Scan();
 CloseFileDirs();
 
-
 #Subs
-#------------------------------------------------------------------------
-sub SayWhatYouSee {
-	print "\n\n" . "*" x 30 . "\n\n Romdata Asset Matching Tool\n\n" . "*" x 30 . "\n\n";
-	
-	$inputfile eq ''? die "Quiting - You didn't set an input file" : print "Input file set to:\n $inputfile\n\n";
-	$outdir    eq ''? die "Quiting - You didn't set an output dir" : print "Output directory set to:\n $outdir\n\n";
-	if ( scalar @inputdir == 0 ) { die "Quiting - You didn't pass me any input directories"; }
-	else { foreach $index ( 0 .. $#inputdir ) { print "Input directory $index set to $inputdir[$index]\n"; } }
-}
-
 #------------------------------------------------------------------------
 sub OpChoice{    #What are we doing and what filetype does that mean we'll look for?
     
@@ -59,7 +51,7 @@ sub OpChoice{    #What are we doing and what filetype does that mean we'll look 
 	print "\nWhat do you want to compare?\n";
     for ( $index = 0 ; $index < $#menu_array + 1 ; $index++ ) { print "\n\t$index)$menu_array[$index]\n"; }
     $menu_item = <STDIN>;
-    if ( $menu_item =~ /^[\+]?[0-3]*\.?[0-3]*$/ && $menu_item !~ /^[\. ]*$/ ){    #if its a number between 0 and 3
+    if ( $menu_item =~ /^[\+]?[0-$#menu_array]*\.?[0-$#menu_array]*$/ && $menu_item !~ /^[\. ]*$/ ){    #if its a number between 0 and 3
         $opType = $menu_array[$menu_item]; print "\nYou chose $opType\t";      	  #we get our operation type...
 		} 
     else { die "\nNo, that's not sensible. Try again with a choice that's in the menu\n"; }
@@ -90,7 +82,7 @@ sub SimChoice { #Give user choice of behaviour
 sub OpenFileDirs {
     if ($copy) { make_path $outputdir; }
     if ($copy) { make_path "$outputdir\\Parentchild"; }    # make this dir for image types in case we need it later
-    open( QPDATFILE, $inputfile ) or die "Cannot open Quickplay dat file\n";
+    open( INPUTDATFILE, $inputfile ) or die "Cannot open Quickplay dat file\n";
     $havefile = "$outdir\\Have$opType.txt"; open( HAVEFILE, ">$havefile" );
     $parentchildfile = "$outdir\\ParentChild$opType.txt"; open( PARENTCHILDFILE, ">$parentchildfile" );
     $missfile = "$outdir\\Miss$opType.txt"; open( MISSFILE, ">$missfile" );
@@ -99,17 +91,20 @@ sub OpenFileDirs {
 
 #------------------------------------------------------------------------
 sub ParseQPFile {
-    $line = <QPDATFILE>;
+    $line = <INPUTDATFILE>;
     chomp $line;
     die "Quickplay data file not valid\n" if ( not $line =~ /ROM DataFile Version : / );    # check QP Data file is valid
-    $QPS        = chr(172);          #Quickplay's separator is ¬
-    $qp_pattern = "([^$QPS]*)$QPS";  #...so a Quickplay romdata entry consists of this pattern...
-    $qp_line = "$qp_pattern" x 19; 	 #...thus a line of Quickplay romdata consits of that entry repeated 19 times
+    my $QPS        = chr(172);          #Quickplay's separator is ¬
+    my $qp_pattern = "([^$QPS]*)$QPS";  #...so a Quickplay romdata entry consists of this pattern...
+    $dat_line 	   = "$qp_pattern" x 19; 	 #...and a line of Quickplay romdata consits of that entry repeated 19 times
+}
 
+#------------------------------------------------------------------------
+sub Scan {
     print "\nScanning...\n";
-    while ( $line = <QPDATFILE> ) {
+    while ( $line = <INPUTDATFILE> ) {
         chomp $line;
-        if ( $line =~ /^$qp_line/ ) {
+        if ( $line =~ /^$dat_line/ ) {
             $mameName   = $2;    #mamename
             $mameParent = $3;    #parent romname
 
@@ -150,12 +145,12 @@ sub ParseQPFile {
         }
     }
 
-    printf "%-50s %10u", "\nnumber of mamenames present as child or parent:\t", ( defined $there ? "$there" : "0" );
+    printf "%-50s %10u", "\nnumber of mamenames present as child or parent:\t", ( defined $there ? 	  "$there" : "0" );
     printf "%-46s %10u", "\nNumber of mamenames not found:\t", 					( defined $notThere ? "$notThere" : "0" );
 }
 
 sub CloseFileDirs {
-    close(QPDATFILE);
+    close(INPUTDATFILE);
     close(HAVEFILE);
     close(PARENTCHILDFILE);
     close(MISSFILE);
