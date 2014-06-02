@@ -45,25 +45,28 @@ CloseFileDirs();
 #Subs
 #------------------------------------------------------------------------
 sub OpChoice{    #What are we doing and what filetype does that mean we'll look for?
-    
-	my @menu_array = ( "Roms", "Screens", "Titles", "Icons" );
-    
-	print "\nWhat do you want to compare?\n";
-    for ( $index = 0 ; $index < $#menu_array + 1 ; $index++ ) { print "\n\t$index)$menu_array[$index]\n"; }
-    $menu_item = <STDIN>;
-    if ( $menu_item =~ /^[\+]?[0-$#menu_array]*\.?[0-$#menu_array]*$/ && $menu_item !~ /^[\. ]*$/ ){    #if its a number between 0 and 3
-        $opType = $menu_array[$menu_item]; print "\nYou chose $opType\t";      	  #we get our operation type...
-		} 
-    else { die "\nNo, that's not sensible. Try again with a choice that's in the menu\n"; }
-
-    %fileTypes = (
+	
+	my %filetypes = (
+	#############################################
+	#####INPUT YOUR ASSET AND FILTYPES HERE######
         "Roms"    => ".zip",
         "Screens" => ".png",
         "Titles"  => ".png",
         "Icons"   => ".ico",
-    );
+    #############################################
+	);
+	
+	my @menu_array; foreach my $keys (keys %filetypes) { unshift @menu_array, $keys }; #push the keys into array for the menu
+    
+	print "\nWhat do you want to compare?\n";
+    for ( my $index = 0 ; $index < $#menu_array + 1 ; $index++ ) { print "\n\t$index)$menu_array[$index]\n"; }
+    my $menu_item = <STDIN>;
+    if ( $menu_item =~ /^[\+]?[0-$#menu_array]*\.?[0-$#menu_array]*$/ && $menu_item !~ /^[\. ]*$/ ){    #if its a number, and a number from the menu...
+        $opType = $menu_array[$menu_item]; print "\nYou chose $opType\t";      	  #we get our operation type...
+	} 
+    else { die "\nNo, that's not sensible. Try again with a choice that's in the menu\n"; }
 
-    $fileType  = $fileTypes{$opType};
+    $fileType  = $filetypes{$opType};
     $outputdir = "$outdir\\$opType";    #SET THE OUTPUT DIRECTORY BASED ON OPTYPE NAME
     print "So I'm going to look for:\t$fileType\n\n";
 }
