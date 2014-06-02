@@ -18,20 +18,20 @@ sub ParseQPFile;
 sub CloseFileDirs;
 sub SayWhatYouSee;
 
-$inputfile = $ARGV[0];
-
 #--------------------------------------------------------------------------
 # INPUT YOUR DIRECTORIES HERE
+
+undef $ARGV[0]? $inputfile = $ARGV[0] : $inputfile = ''; #Input file is the first cmd arg or what's here
+undef $ARGV[1]? $outdir = $ARGV[1] : $outdir = "F:\\Arcade\\TRANSIT";  #output dir is the 2nd cmd arg or what's here
+
 @inputdir = (    #input dirs - no trailing \ please!!!!
     'F:\Arcade\TRANSIT\UNZIP\MAMESCREENIES',
     'F:\Arcade\SCREENSHOTS\FBA_nonMAME_screenshots',
     'F:\Sega Games\HazeMD\HazeMD\snap',
     'F:\Arcade\SCREENSHOTS\Winkawaks_NONMAME_screenshots',
 );
-$outdir = "F:\\Arcade\\TRANSIT";  #output dir
-
 #--------------------------------------------------------------------------
-#MAIN PROGRAM FLOW
+#Main program
 SayWhatYouSee();
 OpChoice();
 SimChoice();
@@ -40,12 +40,13 @@ ParseQPFile();
 CloseFileDirs();
 
 
-#Subroutines
+#Subs
 #------------------------------------------------------------------------
 sub SayWhatYouSee {
 	print "\n\n" . "*" x 30 . "\n\n Romdata Asset Matching Tool\n\n" . "*" x 30 . "\n\n";
-	$inputfile eq ''? die "Quiting - You didn't pass me an input file" : print "Input file set to:\n $inputfile\n\n";
-	$outdir    eq ''? die "Quiting - You didn't program an output dir" : print "Output directory set to:\n $outdir\n\n";
+	
+	$inputfile eq ''? die "Quiting - You didn't set an input file" : print "Input file set to:\n $inputfile\n\n";
+	$outdir    eq ''? die "Quiting - You didn't set an output dir" : print "Output directory set to:\n $outdir\n\n";
 	if ( scalar @inputdir == 0 ) { die "Quiting - You didn't pass me any input directories"; }
 	else { foreach $index ( 0 .. $#inputdir ) { print "Input directory $index set to $inputdir[$index]\n"; } }
 }
@@ -119,7 +120,7 @@ sub ParseQPFile {
             if ( $mameName ne '' ) 		{ foreach my $path ( 0 .. $#inputdir ) { push( @search_path, "$inputdir[$path]\\$mameName$fileType" ); } }
             if ( $mameParent ne '' )	{ foreach my $path ( 0 .. $#inputdir ) { push( @parent_search_path, "$inputdir[$path]\\$mameParent$fileType" ); } }
 			
-            $foundPath = '';
+            $foundPath = ''; # first search for mame romname itself in the directories you specified
             until ($foundPath) {
                 foreach my $path ( 0 .. $#search_path ) { #print "rom = $mameName, search path = $search_path[$path], path = $path\n" ;
                     if ( $search_path[$path] ne '' && -e $search_path[$path] ) {
@@ -130,7 +131,7 @@ sub ParseQPFile {
                     }
                 }
 
-                if ( $foundPath eq '' && $opType ne 'Roms' ) {
+                if ( $foundPath eq '' && $opType ne 'Roms' ) { #if we're doing a non-rom operation, and if we didn't find the child in the above loop, search for its parent
                     foreach my $path ( 0 .. $#parent_search_path ) { #print "rom = $mameParent, search path = $parent_search_path[$path], path = $path\n" ;
                         if ( $parent_search_path[$path] ne '' && -e $parent_search_path[$path] ) {
                             $there++;
@@ -156,7 +157,7 @@ sub ParseQPFile {
 sub CloseFileDirs {
     close(QPDATFILE);
     close(HAVEFILE);
-    close(PARENTCHILD);
+    close(PARENTCHILDFILE);
     close(MISSFILE);
     close(COPYFILE);
 }
