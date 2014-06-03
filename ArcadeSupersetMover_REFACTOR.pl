@@ -27,15 +27,14 @@ undef $ARGV[1]? $output_dir_root = $ARGV[1] : $output_dir_root = 'F:\\Arcade\\TR
 
 #say what you see...
 print "\n\n" . "*" x 30 . "\n\n Romdata Asset Matching Tool\n\n" . "*" x 30 . "\n\n";
-$inputfile eq ''? die "Quiting - You didn't set an input file\n" : print "Input file set to:\n $inputfile\n\n";
-$output_dir_root    eq ''? die "Quiting - You didn't set an output dir\n" : print "Output directory set to:\n $output_dir_root\n\n";
+$inputfile 				eq ''? die "Quiting - You didn't set an input file\n" : print "Input file set to:\n $inputfile\n\n";
+$output_dir_root 		eq ''? die "Quiting - You didn't set an output dir\n" : print "Output directory set to:\n $output_dir_root\n\n";
 if ( scalar @inputdir == 0 ) { die "Quiting - You didn't pass me any input directories\n"; }
 else { foreach $index ( 0 .. $#inputdir ) { print "Input directory $index set to $inputdir[$index]\n"; } }
 
 #--------------------------------------------------------------------------
 #Main program
 ( $optype, $filetype ) = OpChoice(); 
-$outputdir = "$output_dir_root\\$optype";    #SET THE OUTPUT DIRECTORY BASED ON OPTYPE NAME
 ( $copy ) = SimChoice();
 OpenFileDirs( $copy );
 ParseQPFile();
@@ -83,7 +82,7 @@ sub SimChoice { #Give user choice of behaviour
 #------------------------------------------------------------------------
 sub OpenFileDirs {
 	my $copy = shift(@_);
-    if ($copy) { make_path $outputdir; make_path "$outputdir\\Parentchild"; }   #the latter dir for image types in case we need it later
+    if ($copy) { make_path "$output_dir_root\\$optype"; make_path "$output_dir_root\\$optype\\Parentchild"; }   #the latter dir for image types in case we need it later
     open( INPUTDATFILE, $inputfile ) or die "Cannot open input dat file\n";
     $havefile = "$output_dir_root\\Have$optype.txt"; open( HAVEFILE, ">$havefile" );
     $parentchildfile = "$output_dir_root\\ParentChild$optype.txt"; open( PARENTCHILDFILE, ">$parentchildfile" );
@@ -110,7 +109,7 @@ sub Scan {
             $mameName   = $2;    #mamename
             $mameParent = $3;    #parent romname
 
-            my $this_outputdir = $outputdir; #previous image may have changed the output dir to \\parentchild
+            my $this_outputdir = "$output_dir_root\\$optype"; #previous image may have changed the output dir to \\parentchild
 
             my @search_path; my @parent_search_path; #reinit arrays
 			
