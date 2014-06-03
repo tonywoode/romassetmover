@@ -15,7 +15,7 @@ use File::Path qw(make_path);
 ################# INPUT YOUR SEARCH DIRECTORIES HERE###########################
 
 undef $ARGV[0]? $inputfile = $ARGV[0] : $inputfile = 'C:\Emulators\QUICKPLAY\qp\data\Arcade\FinalBurn Alpha\ROMDATA.dat'; #Input file is the first cmd arg or what's here
-undef $ARGV[1]? $outdir = $ARGV[1] : $outdir = 'F:\\Arcade\\TRANSIT';  #output dir is the 2nd cmd arg or what's here
+undef $ARGV[1]? $output_dir_root = $ARGV[1] : $output_dir_root = 'F:\\Arcade\\TRANSIT';  #output dir is the 2nd cmd arg or what's here
 
 @inputdir = ( #yes you have to set these here - search dirs - no trailing \ please!!!!
     'F:\Arcade\TRANSIT\UNZIP\MAMESCREENIES',
@@ -28,16 +28,16 @@ undef $ARGV[1]? $outdir = $ARGV[1] : $outdir = 'F:\\Arcade\\TRANSIT';  #output d
 #say what you see...
 print "\n\n" . "*" x 30 . "\n\n Romdata Asset Matching Tool\n\n" . "*" x 30 . "\n\n";
 $inputfile eq ''? die "Quiting - You didn't set an input file\n" : print "Input file set to:\n $inputfile\n\n";
-$outdir    eq ''? die "Quiting - You didn't set an output dir\n" : print "Output directory set to:\n $outdir\n\n";
+$output_dir_root    eq ''? die "Quiting - You didn't set an output dir\n" : print "Output directory set to:\n $output_dir_root\n\n";
 if ( scalar @inputdir == 0 ) { die "Quiting - You didn't pass me any input directories\n"; }
 else { foreach $index ( 0 .. $#inputdir ) { print "Input directory $index set to $inputdir[$index]\n"; } }
 
 #--------------------------------------------------------------------------
 #Main program
-( $optype, $filetype ) = OpChoice(); $outputdir = "$outdir\\$optype";    #SET THE OUTPUT DIRECTORY BASED ON OPTYPE NAME
-print "So I'm going to look for:\t$filetype\n\n";
-SimChoice();
-OpenFileDirs();
+( $optype, $filetype ) = OpChoice(); 
+$outputdir = "$output_dir_root\\$optype";    #SET THE OUTPUT DIRECTORY BASED ON OPTYPE NAME
+( $copy ) = SimChoice();
+OpenFileDirs( $copy );
 ParseQPFile();
 Scan();
 CloseFileDirs();
@@ -45,7 +45,7 @@ CloseFileDirs();
 #Subs
 #------------------------------------------------------------------------
 sub OpChoice{    #What are we doing and what filetype does that mean we'll look for?
-	my $optype;
+	my $optype; 	my $filetype;
 	my %filetypes = (
 	#####INPUT YOUR ASSET AND FILTYPES HERE######
         "Roms"    => ".zip",
@@ -62,30 +62,33 @@ sub OpChoice{    #What are we doing and what filetype does that mean we'll look 
     my $menu_item = <STDIN>;
     if ( $menu_item =~ /^[\+]?[0-$#menu_array]*\.?[0-$#menu_array]*$/ && $menu_item !~ /^[\. ]*$/ ){    #if its a number, and a number from the menu...
         $optype = $menu_array[$menu_item]; print "\nYou chose $optype\t";      	  #we get our operation type...
+		$filetype = $filetypes{$optype}; print "So I'm going to look for:\t$filetype\n\n";
 	} 
     else { die "\nNo, that's not sensible. Try again with a choice that's in the menu\n"; }
-    return $optype, $filetypes{$optype};    
+    return $optype, $filetype;   #returns the operation we'll do and it's filetype
 }
 
 #---------------------------------------------------------------------------
 sub SimChoice { #Give user choice of behaviour
+	my $copy;
     print "Simulate by default (just hit return), or enter '1' now to COPY\t";
 	CHOICE: while ( $copy = <STDIN> ) {
 				chomp($copy);
 				if ( ( uc($copy) eq uc("1") ) || ( $copy eq "" ) ) { last CHOICE; }
 				else { print "\nYou typed:\t$copy.\n\nTry again - type either \"1\" or press Return:\t\n\n"; }
 			}
+	return $copy
 }
 
 #------------------------------------------------------------------------
 sub OpenFileDirs {
-    if ($copy) { make_path $outputdir; }
-    if ($copy) { make_path "$outputdir\\Parentchild"; }    # make this dir for image types in case we need it later
-    open( INPUTDATFILE, $inputfile ) or die "Cannot open Quickplay dat file\n";
-    $havefile = "$outdir\\Have$optype.txt"; open( HAVEFILE, ">$havefile" );
-    $parentchildfile = "$outdir\\ParentChild$optype.txt"; open( PARENTCHILDFILE, ">$parentchildfile" );
-    $missfile = "$outdir\\Miss$optype.txt"; open( MISSFILE, ">$missfile" );
-    $copyfile = "$outdir\\Copy$optype.txt"; open( COPYFILE, ">$copyfile" );
+	my $copy = shift(@_);
+    if ($copy) { make_path $outputdir; make_path "$outputdir\\Parentchild"; }   #the latter dir for image types in case we need it later
+    open( INPUTDATFILE, $inputfile ) or die "Cannot open input dat file\n";
+    $havefile = "$output_dir_root\\Have$optype.txt"; open( HAVEFILE, ">$havefile" );
+    $parentchildfile = "$output_dir_root\\ParentChild$optype.txt"; open( PARENTCHILDFILE, ">$parentchildfile" );
+    $missfile = "$output_dir_root\\Miss$optype.txt"; open( MISSFILE, ">$missfile" );
+    $copyfile = "$output_dir_root\\Copy$optype.txt"; open( COPYFILE, ">$copyfile" );
 }
 
 #------------------------------------------------------------------------
@@ -107,7 +110,7 @@ sub Scan {
             $mameName   = $2;    #mamename
             $mameParent = $3;    #parent romname
 
-            $outputdir = "$outdir\\$optype"; #previous image may have changed the output dir to \\parentchild
+            my $this_outputdir = $outputdir; #previous image may have changed the output dir to \\parentchild
 
             my @search_path; my @parent_search_path; #reinit arrays
 			
@@ -130,7 +133,7 @@ sub Scan {
                         if ( $parent_search_path[$path] ne '' && -e $parent_search_path[$path] ) {
                             $there++;
                             $foundPath = $parent_search_path[$path];
-                            $outputdir = "$outputdir\\parentchild";
+                            $this_outputdir .= "\\parentchild";
                             printf PARENTCHILDFILE ( "%-15s %-15s %-25s %-15s", "$mameName", "No child, but parent", "Parent is in path$path", " = $parent_search_path[$path]\n" );
                             last;
                         }
@@ -140,7 +143,7 @@ sub Scan {
 
             if ( $foundPath eq '' ) { $notThere++; print "Can't find\t:\t$mameName\n"; print MISSFILE "Can't find\t=\t$mameName\n"; }
             #now do it - we hopefully never copy a parent rom as child name....
-            if ($copy) { print COPYFILE "Copying $foundPath to $outputdir\\$mameName$filetype\n"; copy $foundPath, "$outputdir\\$mameName$filetype"; }
+            if ($copy) { print COPYFILE "Copying $foundPath to $this_outputdir\\$mameName$filetype\n"; copy $foundPath, "$this_outputdir\\$mameName$filetype"; }
         }
     }
 
