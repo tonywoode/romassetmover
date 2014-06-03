@@ -36,8 +36,8 @@ else { foreach $index ( 0 .. $#inputdir ) { print "Input directory $index set to
 #Main program
 ( $optype, $filetype ) = OpChoice(); 
 ( $copy ) = SimChoice();
-OpenFileDirs( $copy );
-ParseQPFile();
+( $dat_line ) = ParseQPFile($inputfile);
+if ($copy) { $copyfile = "$output_dir_root\\Copy$optype.txt"; open( COPYFILE, ">$copyfile" ); }
 Scan();
 CloseFileDirs();
 
@@ -80,29 +80,26 @@ sub SimChoice { #Give user choice of behaviour
 }
 
 #------------------------------------------------------------------------
-sub OpenFileDirs {
-	my $copy = shift(@_);
-    if ($copy) { make_path "$output_dir_root\\$optype"; make_path "$output_dir_root\\$optype\\Parentchild"; }   #the latter dir for image types in case we need it later
-    open( INPUTDATFILE, $inputfile ) or die "Cannot open input dat file\n";
-    $havefile = "$output_dir_root\\Have$optype.txt"; open( HAVEFILE, ">$havefile" );
-    $parentchildfile = "$output_dir_root\\ParentChild$optype.txt"; open( PARENTCHILDFILE, ">$parentchildfile" );
-    $missfile = "$output_dir_root\\Miss$optype.txt"; open( MISSFILE, ">$missfile" );
-    $copyfile = "$output_dir_root\\Copy$optype.txt"; open( COPYFILE, ">$copyfile" );
-}
-
-#------------------------------------------------------------------------
 sub ParseQPFile {
+	my $inputfile = shift(@_);
+	open( INPUTDATFILE, $inputfile ) or die "Cannot open input dat file\n";
     $line = <INPUTDATFILE>;
     chomp $line;
     die "Quickplay data file not valid\n" if ( not $line =~ /ROM DataFile Version : / );    # check QP Data file is valid
     my $QPS        = chr(172);          #Quickplay's separator is ¬
     my $qp_pattern = "([^$QPS]*)$QPS";  #...so a Quickplay romdata entry consists of this pattern...
-    $dat_line 	   = "$qp_pattern" x 19; 	 #...and a line of Quickplay romdata consits of that entry repeated 19 times
+    my $dat_line 	   = "$qp_pattern" x 19; 	 #...and a line of Quickplay romdata consits of that entry repeated 19 times
+	return $dat_line
 }
 
 #------------------------------------------------------------------------
 sub Scan {
-    print "\nScanning...\n";
+	#open scan report files
+	$havefile = "$output_dir_root\\Have$optype.txt"; open( HAVEFILE, ">$havefile" );
+    $parentchildfile = "$output_dir_root\\ParentChild$optype.txt"; open( PARENTCHILDFILE, ">$parentchildfile" );
+    $missfile = "$output_dir_root\\Miss$optype.txt"; open( MISSFILE, ">$missfile" );
+    
+	print "\nScanning...\n";
     while ( $line = <INPUTDATFILE> ) {
         chomp $line;
         if ( $line =~ /^$dat_line/ ) {
@@ -142,7 +139,9 @@ sub Scan {
 
             if ( $foundPath eq '' ) { $notThere++; print "Can't find\t:\t$mameName\n"; print MISSFILE "Can't find\t=\t$mameName\n"; }
             #now do it - we hopefully never copy a parent rom as child name....
-            if ($copy) { print COPYFILE "Copying $foundPath to $this_outputdir\\$mameName$filetype\n"; copy $foundPath, "$this_outputdir\\$mameName$filetype"; }
+			if ($copy) { 
+				make_path "$output_dir_root\\$optype"; make_path "$output_dir_root\\$optype\\Parentchild";   #the latter dir for image types in case we need it later
+				print COPYFILE "Copying $foundPath to $this_outputdir\\$mameName$filetype\n"; copy $foundPath, "$this_outputdir\\$mameName$filetype"; }
         }
     }
 
