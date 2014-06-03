@@ -101,10 +101,23 @@ sub Scan {
     
 	print "\nScanning...\n";
     while ( $line = <INPUTDATFILE> ) {
+		( $foundPath, $this_outputdir, $mameName) = scanLine($line); #run the sub to find each rom
+		if ( $foundPath eq '' ) { $notThere++; print "Can't find\t:\t$mameName\n"; print MISSFILE "Can't find\t=\t$mameName\n"; }
+            #now do it - we hopefully never copy a parent rom as child name....
+			if ($copy) { 
+				make_path "$output_dir_root\\$optype"; make_path "$output_dir_root\\$optype\\Parentchild";   #the latter dir for image types in case we need it later
+				print COPYFILE "Copying $foundPath to $this_outputdir\\$mameName$filetype\n"; copy $foundPath, "$this_outputdir\\$mameName$filetype"; }	
+	}
+	printf "%-50s %10u", "\nnumber of mamenames present as child or parent:\t", ( defined $there ? 	  "$there" : "0" );
+    printf "%-46s %10u", "\nNumber of mamenames not found:\t", 					( defined $notThere ? "$notThere" : "0" );
+}
+	
+sub scanLine {
+		my $line = shift(@_);
         chomp $line;
         if ( $line =~ /^$dat_line/ ) {
-            $mameName   = $2;    #mamename
-            $mameParent = $3;    #parent romname
+            my $mameName   = $2;    #mamename
+            my $mameParent = $3;    #parent romname
 
             my $this_outputdir = "$output_dir_root\\$optype"; #previous image may have changed the output dir to \\parentchild
 
@@ -113,7 +126,7 @@ sub Scan {
             if ( $mameName ne '' ) 		{ foreach my $path ( 0 .. $#inputdir ) { push( @search_path, "$inputdir[$path]\\$mameName$filetype" ); } }
             if ( $mameParent ne '' )	{ foreach my $path ( 0 .. $#inputdir ) { push( @parent_search_path, "$inputdir[$path]\\$mameParent$filetype" ); } }
 			
-            $foundPath = ''; # first search for mame romname itself in the directories you specified
+            my $foundPath = ''; # first search for mame romname itself in the directories you specified
             until ($foundPath) {
                 foreach my $path ( 0 .. $#search_path ) { #print "rom = $mameName, search path = $search_path[$path], path = $path\n" ;
                     if ( $search_path[$path] ne '' && -e $search_path[$path] ) {
@@ -136,18 +149,9 @@ sub Scan {
                     }
                 }
             }
-
-            if ( $foundPath eq '' ) { $notThere++; print "Can't find\t:\t$mameName\n"; print MISSFILE "Can't find\t=\t$mameName\n"; }
-            #now do it - we hopefully never copy a parent rom as child name....
-			if ($copy) { 
-				make_path "$output_dir_root\\$optype"; make_path "$output_dir_root\\$optype\\Parentchild";   #the latter dir for image types in case we need it later
-				print COPYFILE "Copying $foundPath to $this_outputdir\\$mameName$filetype\n"; copy $foundPath, "$this_outputdir\\$mameName$filetype"; }
-        }
-    }
-
-    printf "%-50s %10u", "\nnumber of mamenames present as child or parent:\t", ( defined $there ? 	  "$there" : "0" );
-    printf "%-46s %10u", "\nNumber of mamenames not found:\t", 					( defined $notThere ? "$notThere" : "0" );
-}
+		return $foundPath, $this_outputdir, $mameName;
+		}
+	}
 
 sub CloseFileDirs {
     close(INPUTDATFILE);
