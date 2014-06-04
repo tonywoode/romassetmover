@@ -31,9 +31,10 @@ OpenFileDirs();
 ( $dat_line ) = ParseQPFile($inputfile);
 print "\nScanning...\n";
 while ( $line = <INPUTDATFILE> ) {
-
 	( $foundPath, $this_outputdir, $mameName, $parent, $foundPathIndex ) = scanLine($line, $dat_line); #run the sub to find each rom
-	ReportAndCopy();
+	Report();
+	print "\nCopying...\n";
+	Copy();
 	}
 CloseFileDirs();
 
@@ -114,11 +115,7 @@ sub scanLine {
             my $mameParent = $3;    #parent romname
 			
 			$foundPathIndex = -1;
-
 			my $parent = 0;
-			
-            
-
             my @search_path; my @parent_search_path; #reinit arrays
 			
             if ( $mameName ne '' ) 		{ foreach my $path ( 0 .. $#inputdir ) { push( @search_path, "$inputdir[$path]\\$mameName$filetype" ); } }
@@ -128,9 +125,7 @@ sub scanLine {
             until ($foundPath) {
                 foreach my $path ( 0 .. $#search_path ) { #print "rom = $mameName, search path = $search_path[$path], path = $path\n" ;
                     if ( $search_path[$path] ne '' && -e $search_path[$path] ) {
-                        $foundPath = $search_path[$path];
-						$foundPathIndex = $path;
-                        
+                        $foundPath = $search_path[$path]; $foundPathIndex = $path;
                         last;
                     }
                 }
@@ -139,10 +134,7 @@ sub scanLine {
                     foreach my $path ( 0 .. $#parent_search_path ) { #print "rom = $mameParent, search path = $parent_search_path[$path], path = $path\n" ;
                         if ( $parent_search_path[$path] ne '' && -e $parent_search_path[$path] ) {
 							$parent = 1;
-                            $foundPath = $parent_search_path[$path];
-							$foundPathIndex = $path;
-                            
-                           
+                            $foundPath = $parent_search_path[$path]; $foundPathIndex = $path;
                             last;
                         }
                     }
@@ -153,23 +145,25 @@ sub scanLine {
 	}
 
 #------------------------------------------------------------------------
-sub ReportAndCopy {
-	
+sub Report {
 		if ( $foundPath eq '' ) { $notThere++; print "Can't find\t:\t$mameName\n"; print MISSFILE "Can't find\t=\t$mameName\n"; }
 		if ( $foundPath ne '' ) { $there++; 
 						if ( $parent == 0 ) {printf HAVEFILE ( "%-15s %-15s %-25s %-15s", "$mameName", "Found", "Child is in path $foundPathIndex", " = $foundPath\n" );}
 						elsif ( $parent == 1 ) { printf PARENTCHILDFILE ( "%-15s %-15s %-25s %-15s", "$mameName", "No child, but parent", "Parent is in path$foundPathIndex", " = $foundPath\n" );}
 		
 		}
+		printf "%-50s %10u", "\nnumber of mamenames present as child or parent:\t", ( defined $there ? 	  "$there" : "0" );
+		printf "%-46s %10u", "\nnumber of mamenames not found:\t", 					( defined $notThere ? "$notThere" : "0" );
+}
+		
+#-------------------------------------------------------------------------
+sub Copy {	
 		if ($copy) { #now do it - we hopefully never copy a parent rom as child name....
 					$this_outputdir = "$output_dir_root\\$optype"; #previous image may have changed the output dir to \\parentchild
 					if ( $parent == 1 ) { $this_outputdir .= "\\parentchild"; }
 					make_path "$output_dir_root\\$optype"; make_path "$output_dir_root\\$optype\\Parentchild";   #the latter dir for image types in case we need it later
 					print COPYFILE "Copying $foundPath to $this_outputdir\\$mameName$filetype\n"; copy $foundPath, "$this_outputdir\\$mameName$filetype"; 
 					}	
-	
-	printf "%-50s %10u", "\nnumber of mamenames present as child or parent:\t", ( defined $there ? 	  "$there" : "0" );
-    printf "%-46s %10u", "\nnumber of mamenames not found:\t", 					( defined $notThere ? "$notThere" : "0" );
 }
 
 #-------------------------------------------------------------------------
