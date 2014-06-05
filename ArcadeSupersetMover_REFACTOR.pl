@@ -8,6 +8,8 @@
 # turn out to be Street Fighter 2 World - the point of the parent/child relationship is to ditinguish them)
 #use strict;
 #use warnings;
+package ArcadeSupersetMover;
+
 use File::Copy qw(copy);
 use File::Path qw(make_path);
 
