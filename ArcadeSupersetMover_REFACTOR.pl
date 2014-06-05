@@ -13,8 +13,8 @@ package ArcadeSupersetMover;
 use File::Copy qw(copy);
 use File::Path qw(make_path);
 
-################# INPUT YOUR SEARCH DIRECTORIES HERE###########################
-my $inputfile; my $output_dir_root;
+	##### INPUT YOUR SEARCH DIRECTORIES HERE#####
+my ($inputfile, $output_dir_root);
 undef $ARGV[0]? $inputfile = $ARGV[0] 			: $inputfile = 'C:\Emulators\QUICKPLAY\qp\data\Arcade\FinalBurn Alpha\ROMDATA.dat'; #Input file is the first cmd arg or what's here
 undef $ARGV[1]? $output_dir_root = $ARGV[1] 	: $output_dir_root = 'F:\\Arcade\\TRANSIT';  #output dir is the 2nd cmd arg or what's here
 
@@ -25,8 +25,8 @@ my @inputdir = ( #yes you have to set these here - search dirs - no trailing \ p
     'F:\Arcade\SCREENSHOTS\Winkawaks_NONMAME_screenshots',
 );
 
-my %filetypes = (
 	#####INPUT YOUR ASSET AND FILTYPES HERE######
+my %filetypes = (
         "Roms"    => ".zip",
         "Screens" => ".png",
         "Titles"  => ".png",
@@ -36,18 +36,17 @@ my %filetypes = (
 
 #Main program
 EchoInputs(); # just says these three back to you
-( $optype, $filetype ) = OpChoice(); #What are we doing and what filetype does that mean we'll look for?
-(my $copy ) = SimChoice();
-OpenFileDirs();
-( $dat_line ) = ParseQPFile();
-print "\nScanning...\n";
-while ( $line = <INPUTDATFILE> ) {
-		( $foundpath, $this_outputdir, $mamename, $parent, $found_index ) = scanLine($line, $dat_line); #run the sub to find each rom
-		Report();
-		if ($copy) { print "\nCopying...\n"; }
+my ($optype, $filetype) = OpChoice(%filetypes); #What are we doing and what filetype does that mean we'll look for?
+my ($copy ) = SimChoice();
+OpenFileDirs($output_dir_root, $optype, $copy);
+my ($dat_line) = ParseQPFile();
+while (my $line = <INPUTDATFILE> ) {
+		my ( $foundpath, $mamename, $parent, $found_index ) = scanLine($line, $dat_line, $inputdir, $filetype, $optype );
+		Report($foundpath, $mamename,$parent, $found_index);
 		Copy(); #now do it - we hopefully never copy a parent rom as child name....
 }
 CloseFileDirs();
+print "\Finished\n";
 
 #------------------------------------------------------------------------
 #Subs
@@ -60,23 +59,24 @@ if ( scalar @inputdir == 0 ) { die "Quiting - You didn't pass me any input direc
 else { foreach $index ( 0 .. $#inputdir ) { print "Input directory $index set to $inputdir[$index]\n"; } }
 }
 
-sub OpChoice{    
-	my $optype; 	my $filetype;
+sub OpChoice{
+	my %filetypes = @_; #all we neeed is a list of filetypes and user input
+	my ($optype, $filetype);
 	my @menu_array; foreach my $keys (keys %filetypes) { unshift @menu_array, $keys }; #push the keys into array for the menu
 	print "\nWhat do you want to compare?\n";
     for ( my $index = 0 ; $index < $#menu_array + 1 ; $index++ ) { print "\n\t$index)$menu_array[$index]\n"; }
     my $menu_item = <STDIN>;
     if ( $menu_item =~ /^[\+]?[0-$#menu_array]*\.?[0-$#menu_array]*$/ && $menu_item !~ /^[\. ]*$/ ){    #if its a number, and a number from the menu...
-        $optype = $menu_array[$menu_item]; print "\nYou chose $optype\t";      	  #we get our operation type...
+        $optype = $menu_array[$menu_item]; print "\nYou chose $optype\t";      	  						#we get our operation type...
 		$filetype = $filetypes{$optype}; print "So I'm going to look for:\t$filetype\n\n";
 	} 
     else { die "\nNo, that's not sensible. Try again with a choice that's in the menu\n"; }
-    return $optype, $filetype;   #returns the operation we'll do and it's filetype
+    return $optype, $filetype;
 }
 
 sub SimChoice {
 	my $copy;
-    print "Simulate by default (just hit return), or enter '1' now to COPY\t";
+	print "Simulate by default (just hit return), or enter '1' now to COPY\t";
 	CHOICE: while ( $copy = <STDIN> ) {
 				chomp($copy);
 				if ( ( uc($copy) eq uc("1") ) || ( $copy eq "" ) ) { last CHOICE; }
@@ -86,34 +86,40 @@ sub SimChoice {
 }
 
 sub OpenFileDirs {
+	my ($output_dir_root, $optype, $copy) = @_; # need to know the root output dir, the type of asset to name folders, and whether we are copying
+	
 	open( INPUTDATFILE, $inputfile ) or die "Cannot open input dat file\n";
 	$havefile = "$output_dir_root\\Have$optype.txt"; open( HAVEFILE, ">$havefile" );
 	$missfile = "$output_dir_root\\Miss$optype.txt"; open( MISSFILE, ">$missfile" );
     $parentchildfile = "$output_dir_root\\ParentChild$optype.txt"; open( PARENTCHILDFILE, ">$parentchildfile" );
 	if ($copy) { $copyfile = "$output_dir_root\\Copy$optype.txt"; open( COPYFILE, ">$copyfile" ); }
+	#All global variables, nothing to return
 }
 
 sub ParseQPFile {	
     my $line = <INPUTDATFILE>; chomp $line;
-    die "Quickplay data file not valid\n" if ( not $line =~ /ROM DataFile Version : / );    # check QP Data file is valid
+    die "Quickplay data file not valid\n" if ( not $line =~ /ROM DataFile Version : / );
     my $QPS        = chr(172);          #Quickplay's separator is ¬
     my $qp_pattern = "([^$QPS]*)$QPS";  #...so a Quickplay romdata entry consists of this pattern...
     my $dat_line 	   = "$qp_pattern" x 19; 	 #...and a line of Quickplay romdata consits of that entry repeated 19 times
 	return $dat_line;
 }
 
-sub scanLine {
+sub scanLine {#need a line of romdata, a line format, a directory the files are in and their type, and the operation
+	my($line, $dat_line, $inputdir, $filetype, $optype ) = @_;
+	
     chomp $line;
     if ( $line =~ /^$dat_line/ ) {
-        my $mamename   = $2;    #mamename
-        my $mameparent = $3;    #parent romname
-			
-		my $found_index = -1;
-		my $parent = 0;			
-        my $foundpath = '';
+		$mamename   = $2;    #the name of the mame asset we're looking for
+        my $mameparent = $3;    #that rom's paraent...		
+		$found_index = -1;
+		$parent = 0;			
+        $foundpath = '';
+		
+		print "\nScanning...\n";
 			
 		until ($foundpath) {
-               foreach my $path ( 0 .. $#inputdir ) { #print "rom = $mamename, search path = $search_path[$path], path = $path\n" ;
+               foreach my $path ( 0 .. $#inputdir ) {
                     if	( $mamename ne '' && -e "$inputdir[$path]\\$mamename$filetype" ) { 
 						$foundpath = "$inputdir[$path]\\$mamename$filetype"; $found_index = $path;
 					}
@@ -123,27 +129,31 @@ sub scanLine {
                     else { break; }
               }
 		}
-	return $foundpath, $this_outputdir, $mamename, $parent, $found_index;
+	return $foundpath, $mamename, $parent, $found_index; #give back the path, and some less important stuff for reporting
 	}
 }
 
 sub Report {
+	my ($foundpath, $mamename,$parent, $found_index) = @_; #need a whole bunch of info just for logging
+	
+	#my($there, $notthere); its not good to do that!!!
+	
 	if ( $foundpath eq '' ) { 
-		$notThere++; 
+		$notthere++; 
 		print "Can't find\t:\t$mamename\n"; 
 		print MISSFILE "Can't find\t=\t$mamename\n"; 
 		}
 	if ( $foundpath ne '' ) { 
 		$there++; 
 		if 		( $parent == 0 ) {
-				printf HAVEFILE ( "%-15s %-15s %-25s %-15s", "$mamename", "Found", "Child is in path $found_index", " = $foundpath\n" );
+				printf HAVEFILE ( "%-15s %-25s %-15s", "$mamename", "Found Child in path $found_index", " = $foundpath\n" );
 		}
 		elsif 	( $parent == 1 ) {
-				printf PARENTCHILDFILE ( "%-15s %-15s %-25s %-15s", "$mamename", "No child, but parent", "Parent is in path$found_index", " = $foundpath\n" );
+				printf PARENTCHILDFILE ( "%-15s %-25s %-15s", "$mamename", "No child, but Parent is in path$found_index", " = $foundpath\n" );
 		}
 	}
 	printf "%-50s %10u", "\nnumber of mamenames present as child or parent:\t", ( defined $there ? 	  "$there" : "0" );
-	printf "%-46s %10u", "\nnumber of mamenames not found:\t", 					( defined $notThere ? "$notThere" : "0" );
+	printf "%-46s %10u", "\nnumber of mamenames not found:\t", 					( defined $notthere ? "$notthere" : "0" );
 }
 		
 sub Copy {	
@@ -151,6 +161,7 @@ sub Copy {
 		$this_outputdir = "$output_dir_root\\$optype"; make_path $this_outputdir;
 		if ( $parent == 1 ) { $this_outputdir .= "\\parentchild"; } make_path $this_outputdir;
 			my $outputFile = "$this_outputdir\\$mamename$filetype";
+			print "\nCopying...\n";
 			print COPYFILE "Copying $foundpath to $outputFile\n"; copy $foundpath, $outputFile; 
 	}
 }
