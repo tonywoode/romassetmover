@@ -6,14 +6,15 @@
 # Because mame-roms have a parent/child relationship, if we don't find the asset, we try and find it's parent and use its asset. (That may or may not
 # be helpful so its stored in a subfolder. It certainly ISN'T helpful for the ROM itself so we turn it off (we don't want Street Fighter 2 Brazil to 
 # turn out to be Street Fighter 2 World - the point of the parent/child relationship is to ditinguish them)
+package ArcadeSupersetMover;
+
 use strict;
 use warnings;
-package ArcadeSupersetMover;
 
 use File::Copy qw(copy);
 use File::Path qw(make_path);
 
-	##### INPUT YOUR SEARCH DIRECTORIES HERE#####
+##### INPUT YOUR SEARCH DIRECTORIES HERE#####
 my ($inputfile, $output_dir_root);
 undef $ARGV[0]? $inputfile = $ARGV[0] 			: $inputfile = 'C:\Emulators\QUICKPLAY\qp\data\Arcade\FinalBurn Alpha\ROMDATA.dat'; #Input file is the first cmd arg or what's here
 undef $ARGV[1]? $output_dir_root = $ARGV[1] 	: $output_dir_root = 'F:\\Arcade\\TRANSIT';  #output dir is the 2nd cmd arg or what's here
@@ -25,7 +26,7 @@ my @inputdir = ( #yes you have to set these here - search dirs - no trailing \ p
     'F:\Arcade\SCREENSHOTS\Winkawaks_NONMAME_screenshots',
 );
 
-	#####INPUT YOUR ASSET AND FILTYPES HERE######
+#####INPUT YOUR ASSET AND FILTYPES HERE######
 my %filetypes = (
         "Roms"    => ".zip",
         "Screens" => ".png",
@@ -33,21 +34,24 @@ my %filetypes = (
         "Icons"   => ".ico",
 	);
 
-
 #Main program
 EchoInputs(); # just says these three back to you
 my ($optype, $filetype) = OpChoice(%filetypes); #What are we doing and what filetype does that mean we'll look for?
-my ($copy ) = SimChoice();
+my ($copy ) 			= SimChoice();
 OpenFileDirs($output_dir_root, $optype, $copy);
-my ($dat_line) = ParseQPFile();
-my($there, $notthere); #sigh...need to init before the report loop
+my ($dat_line) 			= ParseQPFile();
+
+my($there, $notthere);							#sigh...need to init before the report loop
 while (my $line = <INPUTDATFILE> ) {
-		my ( $foundpath, $mamename, $parent, $found_index ) = scanLine($line, $dat_line, $filetype, $optype, @inputdir );
-		Report($foundpath, $mamename,$parent, $found_index);
-		if ($copy) { Copy($output_dir_root, $optype, $parent, $foundpath, $mamename); } #now do it - we hopefully never copy a parent rom as child name....
+	   my ( $foundpath, $mamename, $parent, $found_index ) = scanLine($line, $dat_line, $filetype, @inputdir );
+	   Report($foundpath, $mamename,$parent, $found_index);
+	   unless ($optype eq 'Roms' && $parent == 1) {#now copy - we hopefully never copy a parent rom as child name....
+			   if ($copy && $foundpath ne '') { Copy($output_dir_root, $optype, $parent, $foundpath, $mamename); }
+	   }
 }
+
 CloseFileDirs();
-print "\\Finished\n";
+print "\nFinished\n";
 
 #------------------------------------------------------------------------
 #Subs
@@ -100,19 +104,20 @@ sub OpenFileDirs {
 sub ParseQPFile {	
     my $line = <INPUTDATFILE>; chomp $line;
     die "Quickplay data file not valid\n" if ( not $line =~ /ROM DataFile Version : / );
-    my $QPS        = chr(172);          #Quickplay's separator is ¬
-    my $qp_pattern = "([^$QPS]*)$QPS";  #...so a Quickplay romdata entry consists of this pattern...
-    my $dat_line 	   = "$qp_pattern" x 19; 	 #...and a line of Quickplay romdata consits of that entry repeated 19 times
+    my $QPS        = chr(172);          		#Quickplay's separator is ¬
+    my $qp_pattern = "([^$QPS]*)$QPS";  		#...so a Quickplay romdata entry consists of this pattern
+    my $dat_line 	   = "$qp_pattern" x 19; 	#...and a line of Quickplay romdata consits of that entry repeated 19 times
 	return $dat_line;
 }
 
 sub scanLine {#need a line of romdata, a line format, a directory the files are in and their type, and the operation
-	my($line, $dat_line, $filetype, $optype,  @inputdir ) = @_;
+	my($line, $dat_line, $filetype, @inputdir ) = @_;
 	
     chomp $line;
     if ( $line =~ /^$dat_line/ ) {
-		my $mamename   = $2;    #the name of the mame asset we're looking for
-        my $mameparent = $3;    #that rom's paraent...		
+		my $mamename   = $2;    #the name of the mame asset we're looking for is the 3rd field
+        my $mameparent = $3;    #that rom's parentis the 4th		
+		
 		my $found_index = -1;
 		my $parent = 0;			
         my $foundpath = '';
@@ -120,15 +125,14 @@ sub scanLine {#need a line of romdata, a line format, a directory the files are 
 		print "\nScanning...\n";
 			
 		MAMESEARCH:until ($foundpath) {
-               foreach my $path ( 0 .. $#inputdir ) {
+              foreach my $path (0 .. $#inputdir) {
                     if	( $mamename ne '' && -e "$inputdir[$path]\\$mamename$filetype" ) { 
 						$foundpath = "$inputdir[$path]\\$mamename$filetype"; $found_index = $path;
 					}
-					elsif	( $mameparent ne '' && -e "$inputdir[$path]\\$mameparent$filetype" && $optype ne 'Roms' ) {
+					elsif	( $mameparent ne '' && -e "$inputdir[$path]\\$mameparent$filetype" ){
 							$parent = 1; $foundpath = "$inputdir[$path]\\$mameparent$filetype"; $found_index = $path; 
-					}
-                    
-              }last MAMESEARCH;
+					}   
+              }last MAMESEARCH; #$foundpath will be ''
 		} 
 	return $foundpath, $mamename, $parent, $found_index; #give back the path, and some less important stuff for reporting
 	}
@@ -137,17 +141,17 @@ sub scanLine {#need a line of romdata, a line format, a directory the files are 
 sub Report {
 	my ($foundpath, $mamename,$parent, $found_index) = @_; #need a whole bunch of info just for logging
 	
-	if ( $foundpath eq '' ) { 
+	if ($foundpath eq '') { 
 		$notthere++; 
 		print "Can't find\t:\t$mamename\n"; 
 		print MISSFILE "Can't find\t=\t$mamename\n"; 
 		}
-	if ( $foundpath ne '' ) { 
+	if ($foundpath ne '') { 
 		$there++; 
-		if 		( $parent == 0 ) {
+		if 		($parent == 0) {
 				printf HAVEFILE ( "%-15s %-25s %-15s", "$mamename", "Found Child in path $found_index", " = $foundpath\n" );
 		}
-		elsif 	( $parent == 1 ) {
+		elsif 	($parent == 1) {
 				printf PARENTCHILDFILE ( "%-15s %-25s %-15s", "$mamename", "No child, but Parent is in path$found_index", " = $foundpath\n" );
 		}
 	}
@@ -159,7 +163,7 @@ sub Copy {
 	my ($output_dir_root, $optype, $parent, $foundpath, $mamename) = @_;
 	
 	my $this_outputdir = "$output_dir_root\\$optype"; make_path $this_outputdir;
-	if ( $parent == 1 ) { $this_outputdir .= "\\parentchild"; } make_path $this_outputdir;
+	if ($parent == 1) { $this_outputdir .= "\\parentchild"; } make_path $this_outputdir;
 		my $outputfile = "$this_outputdir\\$mamename$filetype";
 		print "\nCopying...\n";
 		print COPYFILE "Copying $foundpath to $outputfile\n"; copy $foundpath, $outputfile; 
