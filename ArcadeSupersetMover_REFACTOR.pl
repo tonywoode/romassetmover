@@ -35,17 +35,17 @@ my %filetypes = (
 	);
 
 #Main program
-EchoInputs(); # just says these three back to you
-my ($optype, $filetype) = OpChoice(%filetypes); #What are we doing and what filetype does that mean we'll look for?
-my ($copy ) 			= SimChoice();
-OpenFileDirs($output_dir_root, $optype, $copy);
-my ($dat_line) 			= ParseQPFile();
+EchoInputs(); 											# just says these three back to you
+my ($optype, $filetype) = OpChoice(%filetypes); 		#What are we doing and what filetype does that mean we'll look for?
+my ($copy ) 			= SimChoice();					#are we copying or not?
+OpenFileDirs($output_dir_root, $optype, $copy);			#we name the output files and folders by operation type
+my ($dat_line) 			= ParseQPFile();				#we understand what a QP datafile looks like
 
-my($there, $notthere);							#sigh...need to init before the report loop
-while (my $line = <INPUTDATFILE> ) {
-	   my ( $foundpath, $mamename, $parent, $found_index ) = scanLine($line, $dat_line, $filetype, @inputdir );
+my($there, $notthere);									#sigh...need to init before the report loop
+while (my $line = <INPUTDATFILE> ) {					#we scan for the roms in the input, report what we found, and copy if appropriate
+	   my ( $foundpath, $mamename, $parent, $found_index ) = scanLine($line, $dat_line, $filetype, $optype, @inputdir );
 	   Report($foundpath, $mamename,$parent, $found_index);
-	   unless ($optype eq 'Roms' && $parent == 1) {#now copy - we hopefully never copy a parent rom as child name....
+	   unless ($optype eq 'Roms' && $parent == 1) {		#now copy - never copy a parent rom as child name
 			   if ($copy && $foundpath ne '') { Copy($output_dir_root, $optype, $parent, $foundpath, $mamename); }
 	   }
 }
@@ -67,7 +67,7 @@ else { foreach my $index ( 0 .. $#inputdir ) { print "Input directory $index set
 sub OpChoice{
 	my %filetypes = @_; #all we neeed is a list of filetypes and user input
 	my ($optype, $filetype);
-	my @menu_array; foreach my $keys (keys %filetypes) { unshift @menu_array, $keys }; #push the keys into array for the menu
+	my @menu_array; foreach my $keys (keys %filetypes) { unshift @menu_array, $keys }; 					#push the keys into array for the menu
 	print "\nWhat do you want to compare?\n";
     for ( my $index = 0 ; $index < $#menu_array + 1 ; $index++ ) { print "\n\t$index)$menu_array[$index]\n"; }
     my $menu_item = <STDIN>;
@@ -125,21 +125,27 @@ sub scanLine {#need a line of romdata, a line format, a directory the files are 
 		print "\nScanning...\n";
 			
 		MAMESEARCH:until ($foundpath) {
-              foreach my $path (0 .. $#inputdir) {
-                    if	( $mamename ne '' && -e "$inputdir[$path]\\$mamename$filetype" ) { 
-						$foundpath = "$inputdir[$path]\\$mamename$filetype"; $found_index = $path;
+              foreach my $path (0 .. $#inputdir) {	  
+                    if		( $mamename ne '' && -e "$inputdir[$path]\\$mamename$filetype" ) { 
+							$foundpath = "$inputdir[$path]\\$mamename$filetype"; 
+							$found_index = $path; 
+							last MAMESEARCH;
 					}
 					elsif	( $mameparent ne '' && -e "$inputdir[$path]\\$mameparent$filetype" ){
-							$parent = 1; $foundpath = "$inputdir[$path]\\$mameparent$filetype"; $found_index = $path; 
+							$parent = 1; 
+							$foundpath = "$inputdir[$path]\\$mameparent$filetype"; 
+							$found_index = $path; 
+							last MAMESEARCH;
 					}   
-              }last MAMESEARCH; #$foundpath will be ''
+              } 
+		last MAMESEARCH; #$foundpath will be ''
 		} 
 	return $foundpath, $mamename, $parent, $found_index; #give back the path, and some less important stuff for reporting
 	}
 }
 
 sub Report {
-	my ($foundpath, $mamename,$parent, $found_index) = @_; #need a whole bunch of info just for logging
+	my ($foundpath, $mamename, $parent, $found_index) = @_; #need a whole bunch of info for logging
 	
 	if ($foundpath eq '') { 
 		$notthere++; 
