@@ -8,19 +8,23 @@
 # turn out to be Street Fighter 2 World - the point of the parent/child relationship is to ditinguish them)
 package ArcadeSupersetMover;
 
+
 use strict;
 use warnings;
 
 use File::Copy qw(copy);
 use File::Path qw(make_path);
+use File::Basename;
 
 ##### INPUT YOUR SEARCH DIRECTORIES HERE#####
 my ($inputfile, $output_dir_root);
+my $SevenZipDir = 'C:\Program Files\7-Zip\7z.exe';
+
 undef $ARGV[0]? $inputfile = $ARGV[0] 			: $inputfile = 'C:\Emulators\QUICKPLAY\qp\data\Arcade\FinalBurn Alpha\ROMDATA.dat'; #Input file is the first cmd arg or what's here
 undef $ARGV[1]? $output_dir_root = $ARGV[1] 	: $output_dir_root = 'F:\\Arcade\\TRANSIT';  #output dir is the 2nd cmd arg or what's here
 
 my @inputdir = ( #yes you have to set these here - search dirs - no trailing \ please!!!!
-    'F:\Arcade\TRANSIT\UNZIP\MAMESCREENIES',
+    'F:\Arcade\TRANSIT\UNZIP\MAMESCREENIES.7z',
     'F:\Arcade\SCREENSHOTS\FBA_nonMAME_screenshots',
     'F:\Sega Games\HazeMD\HazeMD\snap',
     'F:\Arcade\SCREENSHOTS\Winkawaks_NONMAME_screenshots',
@@ -35,6 +39,9 @@ my %filetypes = (
 	);
 
 #Main program
+
+CheckZip();
+
 EchoInputs(); 											# just says these three back to you
 my ($optype, $filetype) = OpChoice(%filetypes); 		#What are we doing and what filetype does that mean we'll look for?
 my ($copy ) 			= SimChoice();					#are we copying or not?
@@ -56,6 +63,7 @@ print "\nFinished\n";
 #------------------------------------------------------------------------
 #Subs
 
+
 sub EchoInputs{
 print "\n\n" . "*" x 30 . "\n\n Romdata Asset Matching Tool\n\n" . "*" x 30 . "\n\n";
 $inputfile 				eq ''? die "Quiting - You didn't set an input file\n" : print "Input file set to:\n $inputfile\n\n";
@@ -63,6 +71,38 @@ $output_dir_root 		eq ''? die "Quiting - You didn't set an output dir\n" : print
 if ( scalar @inputdir == 0 ) { die "Quiting - You didn't pass me any input directories\n"; }
 else { foreach my $index ( 0 .. $#inputdir ) { print "Input directory $index set to $inputdir[$index]\n"; } }
 }
+
+sub CheckZip {
+	foreach my $index ( 0 .. $#inputdir ) { 
+			print "Input directory $index set to $inputdir[$index]\n";  
+			my ($name, $path, $ext) = ( fileparse($inputdir[$index], qr/\.[^.]*/) );
+			#print "ext is\t$ext\n"; #print "name is\t$name\n"; #print "path is\t$path\n";
+			$ext = lc("$ext");
+			if ($ext eq '.zip' || $ext eq '.7z') { UnZip($index, $name); }
+	}
+	die;
+}
+
+sub UnZip {
+	my ($index, $name) = @_; 
+	#print @inputdir, $index, $name;
+	
+	#Goal is to uncompress the zip archive at this array index, and then REPLACE the array index with the new loaction, we'll also need to flag down that theres a folder to delete at the end
+	
+	#https://uk.answers.yahoo.com/question/index?qid=20130128061122AAIubF5
+	# note the -o must touch the output dir. its a 7zip thing not perl
+	# -y assumes yes to all promps
+	
+	my $output = `\"$SevenZipDir\" -y e \"$inputdir[$index]\" -o\"$output_dir_root\\$name\"`; #we need to later delete that $name, somehow...
+	if ($output =~ /Everything is Ok/g){
+		print "Worked\n";
+		}
+	else{
+		print "Sorry\n";
+		} 
+}	
+	
+
 
 sub OpChoice{
 	my %filetypes = @_; #all we neeed is a list of filetypes and user input
