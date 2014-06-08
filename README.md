@@ -1,7 +1,7 @@
 Rom Asset Mover
 ===============
 
-The goal of this perl script is to take a veriety of inputs based around the need to maintain roms and assets
+The goal of this perl script is to take a variety of inputs based around the need to maintain roms and assets
 when using multiple arcade emulators with a frontend. Currently it takes a quickplay datfile and manipulates 
 roms and assets on disk to maintain compatibility between generations of rom names.
 
