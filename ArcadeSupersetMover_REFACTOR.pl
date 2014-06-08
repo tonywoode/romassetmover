@@ -24,7 +24,7 @@ undef $ARGV[1]? $output_dir_root = $ARGV[1] : $output_dir_root = 'F:\\Arcade\\TR
 
 my @inputdir = ( #yes you have to set these here - search dirs - no trailing \ please!!!!
     'F:\Arcade\TRANSIT\UNZIP\MAMESCREENIES.7z',
-    'F:\Arcade\SCREENSHOTS\FBA_nonMAME_screenshots',
+    'F:\Arcade\TRANSIT\FBA_nonMAME_screenshots.zip',
     'F:\Sega Games\HazeMD\HazeMD\snap',
     'F:\Arcade\SCREENSHOTS\Winkawaks_NONMAME_screenshots',
 );
@@ -40,8 +40,6 @@ my %filetypes = (
 #Main program
 my ($array1, $array2) = CheckInputs($inputfile, $output_dir_root, @inputdir); 	#Regurgitate your inputs and sort out any zips
 my @removedirs = @$array1; @inputdir = @$array2; 		#dereference the above arrays - first holds index of any folders to remove at the end....
-print ("##########\n@removedirs, @inputdir\n###############");
-if (@removedirs) { print "unzip temp dirs exist"; }
 
 my ($optype, $filetype) = OpChoice(%filetypes); 		#What are we doing and what filetype does that mean we'll look for?
 print "Simulate by default (just hit return), or enter '1' now to COPY\t";
@@ -59,16 +57,17 @@ while (my $line = <INPUTDATFILE> ) {					#we scan for the roms in the input, rep
 }
 
 CloseFileDirs();
+
 if (@removedirs) { 
 	foreach my $index (0 .. $#removedirs) {
-	print "size of array is $#removedirs";
-	print "at array index $index is $removedirs[$index]";
-	print "\n\n\n$removedirs[$index]\n\n\n";
-	my $index_of_path = $removedirs[$index];
-	print "\nOk to removing temp dir: $inputdir[$index_of_path]?\n1 for yes";
-	my ($delete) = Choice();
-	if ($delete) { remove_tree($inputdir[$index_of_path]); }
+		my $index_of_path = $removedirs[$index];
+		print "\nOk to remove temp dir?: $inputdir[$index_of_path]\n1 for yes\t";
+		my ($delete) = Choice();
+		if ($delete) { 
+			remove_tree($inputdir[$index_of_path]); 
+		}
 	}
+	if ( -e "$output_dir_root\\deleteme") { remove_tree	"$output_dir_root\\deleteme" } #we made a dir to keep the temps in, delete it at the end...
 }
 print "\nFinished\n";
 
@@ -106,7 +105,7 @@ sub CheckForZips {
 sub UnZip { #Uncompress zip archive at this array index, REPLACE the array index with the new loaction, flag theres a folder to delete at the end
 	my ($index, $name, @inputdir) = @_; 
 	
-	my $unzip_dir = "$output_dir_root\\$name";
+	my $unzip_dir = "$output_dir_root\\deleteme\\$name";
 	print "\t$inputdir[$index] is an archive file\n\tMade temp dir at $unzip_dir\nUnzipping...";
 	
 	my $output = `\"$SEVEN_ZIP_PATH\" -y e \"$inputdir[$index]\" -o\"$unzip_dir\"`;		#https://uk.answers.yahoo.com/question/index?qid=20130128061122AAIubF5
