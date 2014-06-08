@@ -15,10 +15,11 @@ use File::Copy qw(copy);
 use File::Path qw(make_path remove_tree);
 use File::Basename;
 
-##### INPUT YOUR SEARCH DIRECTORIES HERE#####
-my ($inputfile, $output_dir_root);
 my $SEVEN_ZIP_PATH = 'C:\Program Files\7-Zip\7z.exe';
 
+my ($inputfile, $output_dir_root);
+
+##### INPUT YOUR SEARCH DIRECTORIES HERE #####
 undef $ARGV[0]? $inputfile = $ARGV[0] 		: $inputfile = 'C:\Emulators\QUICKPLAY\qp\data\Arcade\FinalBurn Alpha\ROMDATA.dat'; #Input file = first cmd arg or what's here
 undef $ARGV[1]? $output_dir_root = $ARGV[1] : $output_dir_root = 'F:\\Arcade\\TRANSIT';  #output dir is the 2nd cmd arg or what's here
 
@@ -29,13 +30,13 @@ my @inputdir = ( #yes you have to set these here - search dirs - no trailing \ p
     'F:\Arcade\SCREENSHOTS\Winkawaks_NONMAME_screenshots',
 );
 
-#####INPUT YOUR ASSET AND FILTYPES HERE######
-my %filetypes = (
-        "Roms"    => ".zip",
+##### INPUT YOUR ASSET AND FILTYPES HERE ######
+my %filetypes = (       
         "Screens" => ".png",
         "Titles"  => ".png",
         "Icons"   => ".ico",
-	);
+		"Roms"    => ".zip",
+);
 
 #Main program
 my ($array1, $array2) = CheckInputs($inputfile, $output_dir_root, @inputdir); 	#Regurgitate your inputs and sort out any zips
@@ -50,14 +51,13 @@ my ($dat_line) 			= ParseQPFile();				#we understand what a QP datafile looks li
 my($there, $notthere);									#sigh...need to init before the report loop
 while (my $line = <INPUTDATFILE> ) {					#we scan for the roms in the input, report what we found, and copy if appropriate
 	   my ( $foundpath, $mamename, $parent, $found_index ) = scanLine($line, $dat_line, $filetype, $optype, @inputdir );
-	   Report($foundpath, $mamename,$parent, $found_index);
+	   Report($foundpath, $mamename,$parent, $found_index, $there, $notthere);
 	   unless ($optype eq 'Roms' && $parent == 1) {		#now copy - never copy a parent rom as child name
 			   if ($copy && $foundpath ne '') { Copy($output_dir_root, $optype, $parent, $foundpath, $mamename); }
 	   }
 }
 
 CloseFileDirs();
-
 if (@removedirs) { 
 	foreach my $index (0 .. $#removedirs) {
 		my $index_of_path = $removedirs[$index];
@@ -118,8 +118,6 @@ sub UnZip { #Uncompress zip archive at this array index, REPLACE the array index
 	my $index_removedir = $index; 			#we'll remove the folder at this location when we're done
 	return ($index_removedir, @inputdir); 	#...so return that index and the new dir
 }	
-	
-
 
 sub OpChoice{
 	my %filetypes = @_; #all we neeed is a list of filetypes and user input
@@ -201,7 +199,7 @@ sub scanLine {#need a line of romdata, a line format, a directory the files are 
 }
 
 sub Report {
-	my ($foundpath, $mamename, $parent, $found_index) = @_; #need a whole bunch of info for logging
+	my ($foundpath, $mamename, $parent, $found_index, $there, $notthere) = @_; #need a whole bunch of info for logging
 	
 	if ($foundpath eq '') { 
 		$notthere++; 
