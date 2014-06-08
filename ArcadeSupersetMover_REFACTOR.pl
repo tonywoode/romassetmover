@@ -12,7 +12,7 @@ use strict;
 use warnings;
 
 use File::Copy qw(copy);
-use File::Path;
+use File::Path qw(make_path remove_tree);
 use File::Basename;
 
 ##### INPUT YOUR SEARCH DIRECTORIES HERE#####
@@ -39,12 +39,13 @@ my %filetypes = (
 
 #Main program
 my ($array1, $array2) = CheckInputs($inputfile, $output_dir_root, @inputdir); 	#Regurgitate your inputs and sort out any zips
-my @removedirs = @$array1; @inputdir = @$array2; #dereference the above arrays - first holds index of any folders to remove at the end....
+my @removedirs = @$array1; @inputdir = @$array2; 		#dereference the above arrays - first holds index of any folders to remove at the end....
 print ("##########\n@removedirs, @inputdir\n###############");
 if (@removedirs) { print "unzip temp dirs exist"; }
-die;
+
 my ($optype, $filetype) = OpChoice(%filetypes); 		#What are we doing and what filetype does that mean we'll look for?
-my ($copy ) 			= SimChoice();					#are we copying or not?
+print "Simulate by default (just hit return), or enter '1' now to COPY\t";
+my ($copy ) 			= Choice();					#are we copying or not?
 OpenFileDirs($output_dir_root, $optype, $copy);			#we name the output files and folders by operation type
 my ($dat_line) 			= ParseQPFile();				#we understand what a QP datafile looks like
 
@@ -58,6 +59,17 @@ while (my $line = <INPUTDATFILE> ) {					#we scan for the roms in the input, rep
 }
 
 CloseFileDirs();
+if (@removedirs) { 
+	foreach my $index (0 .. $#removedirs) {
+	print "size of array is $#removedirs";
+	print "at array index $index is $removedirs[$index]";
+	print "\n\n\n$removedirs[$index]\n\n\n";
+	my $index_of_path = $removedirs[$index];
+	print "\nOk to removing temp dir: $inputdir[$index_of_path]?\n1 for yes";
+	my ($delete) = Choice();
+	if ($delete) { remove_tree($inputdir[$index_of_path]); }
+	}
+}
 print "\nFinished\n";
 
 #SUBS--------------------------------------------------------------------
@@ -72,7 +84,7 @@ sub CheckInputs{
 	else { foreach my $index ( 0 .. $#inputdir ) { 
 		print "Input directory $index set to $inputdir[$index]\n";  
 		(my $index_removedir, @inputdir) = CheckForZips($index, @inputdir); 
-		push (@removedirs, $index_removedir);
+		if (defined $index_removedir) { push (@removedirs, $index_removedir); }
 		}
 	}
 	return (\@removedirs, \@inputdir); #return refernces to the arrays, can't return two arrays
@@ -125,15 +137,14 @@ sub OpChoice{
     return $optype, $filetype;
 }
 
-sub SimChoice {
-	my $copy;
-	print "Simulate by default (just hit return), or enter '1' now to COPY\t";
-	CHOICE: while ( $copy = <STDIN> ) {
-				chomp($copy);
-				if ( ( uc($copy) eq uc("1") ) || ( $copy eq "" ) ) { last CHOICE; }
-				else { print "\nYou typed:\t$copy.\n\nTry again - type either \"1\" or press Return:\t\n\n"; }
+sub Choice {
+	my $op;	
+	CHOICE: while ( $op = <STDIN> ) {
+				chomp($op);
+				if ( ( uc($op) eq uc("1") ) || ( $op eq "" ) ) { last CHOICE; }
+				else { print "\nYou typed:\t$op.\n\nTry again - type either \"1\" or press Return:\t\n\n"; }
 			}
-	return $copy
+	return $op
 }
 
 sub OpenFileDirs {
