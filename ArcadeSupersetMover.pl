@@ -6,7 +6,6 @@
 # Because mame-roms have a parent/child relationship, if we don't find the asset, we try and find it's parent and use its asset. (That may or may not
 # be helpful so its stored in a subfolder. It certainly ISN'T helpful for the ROM itself so we turn it off (we don't want Street Fighter 2 Brazil to 
 # turn out to be Street Fighter 2 World - the point of the parent/child relationship is to ditinguish them)
-package ArcadeSupersetMover;
 
 use strict;
 use warnings;
@@ -24,8 +23,8 @@ undef $ARGV[0]? $inputfile = $ARGV[0] 		: $inputfile = 'C:\Emulators\QUICKPLAY\q
 undef $ARGV[1]? $output_dir_root = $ARGV[1] : $output_dir_root = 'F:\\Arcade\\TRANSIT';  #output dir is the 2nd cmd arg or what's here
 
 my @inputdir = ( #yes you have to set these here - search dirs - no trailing \ please!!!!
-    'F:\Arcade\TRANSIT\UNZIP\MAMESCREENIES.7z',
-    'F:\Arcade\TRANSIT\FBA_nonMAME_screenshots.zip',
+    'F:\Arcade\MAME\mameui\snap\snap.zip',
+    'F:\Arcade\SCREENSHOTS\FBA_nonMAME_screenshots',
     'F:\Sega Games\HazeMD\HazeMD\snap',
     'F:\Arcade\SCREENSHOTS\Winkawaks_NONMAME_screenshots',
 );
@@ -58,20 +57,12 @@ while (my $line = <INPUTDATFILE> ) {					#we scan for the roms in the input, rep
 }
 
 CloseFileDirs();
-if (@removedirs) { 
-	foreach my $index (0 .. $#removedirs) {
-		my $index_of_path = $removedirs[$index];
-		print "\nOk to remove temp dir?: $inputdir[$index_of_path]\n1 for yes\t";
-		my ($delete) = Choice();
-		if ($delete) { 
-			remove_tree($inputdir[$index_of_path]); 
-		}
-	}
-	if ( -e "$output_dir_root\\deleteme") { remove_tree	"$output_dir_root\\deleteme" } #we made a dir to keep the temps in, delete it at the end...
-}
 print "\nFinished\n";
+if (@removedirs) { RemoveTempDirs($output_dir_root, \@removedirs, \@inputdir);	}#pass references to arrays
+
 
 #SUBS--------------------------------------------------------------------
+
 
 sub CheckInputs{
 	my($inputfile, $output_dir_root, @inputdir) = @_; #need the inputs you set above
@@ -81,7 +72,8 @@ sub CheckInputs{
 	$output_dir_root 		eq ''? die "Quiting - You didn't set an output dir\n" : print "Output directory set to:\n $output_dir_root\n\n";
 	if ( scalar @inputdir == 0 ) { die "Quiting - You didn't pass me any input directories\n"; }
 	else { foreach my $index ( 0 .. $#inputdir ) { 
-		print "Input directory $index set to $inputdir[$index]\n";  
+		print "Input directory $index set to $inputdir[$index]\n"; 
+		if	(! -e "$inputdir[$index]" ) {die "Sorry that dir doesn't exist, exiting\n"; } #you'll have to delete the temp dirs yourself.....
 		(my $index_removedir, @inputdir) = CheckForZips($index, @inputdir); 
 		if (defined $index_removedir) { push (@removedirs, $index_removedir); }
 		}
@@ -199,7 +191,7 @@ sub scanLine {#need a line of romdata, a line format, a directory the files are 
 }
 
 sub Report {
-	my ($foundpath, $mamename, $parent, $found_index, $there, $notthere) = @_; #need a whole bunch of info for logging
+	my ($foundpath, $mamename, $parent, $found_index) = @_; #need a whole bunch of info for logging
 	
 	if ($foundpath eq '') { 
 		$notthere++; 
@@ -235,4 +227,18 @@ sub CloseFileDirs {
     close(PARENTCHILDFILE);
     close(MISSFILE);
     close(COPYFILE);
+}
+
+sub RemoveTempDirs() {
+	my ($output_dir_root, $arrray1, $array2) = @_; #taking in two arrays
+	my @removedirs = @$array1; @inputdir = @$array2;
+	foreach my $index (0 .. $#removedirs) {
+		my $index_of_path = $removedirs[$index];
+		print "\nOk to remove temp dir?: $inputdir[$index_of_path]\n1 for yes\t";
+		my ($delete) = Choice();
+		if ($delete) { 
+			remove_tree($inputdir[$index_of_path]); 
+		}
+	}
+	if ( -e "$output_dir_root\\deleteme") { remove_tree	"$output_dir_root\\deleteme" } #we made a dir to keep the temps in, delete it at the end...
 }
