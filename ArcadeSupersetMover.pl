@@ -10,6 +10,7 @@
 use strict;
 use warnings;
 #use diagnostics;
+require Choice;
 
 use File::Copy qw(copy);
 use File::Path qw(make_path remove_tree);
@@ -134,15 +135,6 @@ sub OpChoice{
     return $optype, $filetype;
 }
 
-sub Choice {
-	my $op;	
-	CHOICE: while ( $op = <STDIN> ) {
-				chomp($op);
-				if ( ( uc($op) eq uc("1") ) || ( $op eq "" ) ) { last CHOICE; }
-				else { print "\nYou typed:\t$op.\n\nTry again - type either \"1\" or press Return:\t\n\n"; }
-			}
-	return $op
-}
 
 sub OpenFileDirs {
 	my ($output_dir_root, $optype, $copy) = @_; # need to know the root output dir, the type of asset to name folders, and whether we are copying
