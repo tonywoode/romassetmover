@@ -9,6 +9,7 @@
 
 use strict;
 use warnings;
+#use diagnostics;
 
 use File::Copy qw(copy);
 use File::Path qw(make_path remove_tree);
@@ -24,7 +25,7 @@ undef $ARGV[1]? $output_dir_root = $ARGV[1] : $output_dir_root = 'F:\\Arcade\\TR
 
 my @inputdir = ( #yes you have to set these here - search dirs - no trailing \ please!!!!
     'F:\Arcade\MAME\mameui\snap\snap.zip',
-    'F:\Arcade\SCREENSHOTS\FBA_nonMAME_screenshots',
+    'F:\Arcade\SCREENSHOTS\FBA_nonMAME_screenshots\BASTARDOOOOOOOOOOOOOOOOOO',
     'F:\Sega Games\HazeMD\HazeMD\snap',
     'F:\Arcade\SCREENSHOTS\Winkawaks_NONMAME_screenshots',
 );
@@ -39,15 +40,18 @@ my %filetypes = (
 
 
 #Main program
-my ($array1, $array2) = CheckInputs($inputfile, $output_dir_root, @inputdir); 	#Regurgitate your inputs and sort out any zips
-my @removedirs = @$array1; @inputdir = @$array2; 		#dereference the above arrays - first holds index of any folders to remove at the end....
-
+my ($removedir_ref, $inputdir_ref, $invalid_input) = CheckInputs($inputfile, $output_dir_root, @inputdir); 	#Regurgitate your inputs and sort out any zips
+my @removedirs = @$removedir_ref; @inputdir = @$inputdir_ref; 		#dereference the above arrays - first holds index of any folders to remove at the end....
+if ($invalid_input) { # if there was a problem, get rid of any work done so far....
+		print "Sorry the input dir $invalid_input can't be reached, exiting\n";
+		if (@removedirs) { RemoveTempDirs($output_dir_root, \@removedirs, \@inputdir);	}
+		die "Quit: One of the input dirs isn't reachable\n";
+	}
 my ($optype, $filetype) = OpChoice(%filetypes); 		#What are we doing and what filetype does that mean we'll look for?
 print "Simulate by default (just hit return), or enter '1' now to COPY\t";
 my ($copy ) 			= Choice();						#are we copying or not?
 OpenFileDirs($output_dir_root, $optype, $copy);			#we name the output files and folders by operation type
 my ($dat_line) 			= ParseQPFile();				#we understand what a QP datafile looks like
-
 my($there, $notthere);									#sigh...need to init before the report loop
 while (my $line = <INPUTDATFILE> ) {					#we scan for the roms in the input, report what we found, and copy if appropriate
 	   my ( $foundpath, $mamename, $parent, $found_index ) = scanLine($line, $dat_line, $filetype, $optype, @inputdir );
@@ -69,18 +73,19 @@ sub CheckInputs{
 	my($inputfile, $output_dir_root, @inputdir) = @_; #need the inputs you set above
 	
 	my @removedirs;
+	my $invalid_input;
 	print "\n\n" . "*" x 30 . "\n\n Romdata Asset Matching Tool\n\n" . "*" x 30 . "\n\n";
 	$inputfile 				eq ''? die "Quiting - You didn't set an input file\n" : print "Input file set to:\n $inputfile\n\n";
 	$output_dir_root 		eq ''? die "Quiting - You didn't set an output dir\n" : print "Output directory set to:\n $output_dir_root\n\n";
 	if ( scalar @inputdir == 0 ) { die "Quiting - You didn't pass me any input directories\n"; }
-	else { foreach my $index ( 0 .. $#inputdir ) { 
+	else { VALID: foreach my $index ( 0 .. $#inputdir ) { 
 		print "Input directory $index set to $inputdir[$index]\n"; 
-		if	(! -e "$inputdir[$index]" ) {die "Sorry that dir doesn't exist, exiting\n"; } #you'll have to delete any temp dirs yourself.....
+		if	(! -e "$inputdir[$index]" ) { $invalid_input = "$inputdir[$index]"; last VALID; }
 		(my $index_removedir, @inputdir) = CheckForZips($index, @inputdir); 
 		if (defined $index_removedir) { push (@removedirs, $index_removedir); }
 		}
 	}
-	return (\@removedirs, \@inputdir); #return refernces to the arrays, can't return two arrays
+	return (\@removedirs, \@inputdir, $invalid_input); #return references to the arrays, can't return two arrays
 }
 
 sub CheckForZips {
@@ -232,8 +237,8 @@ sub CloseFileDirs {
 }
 
 sub RemoveTempDirs {
-	my ($output_dir_root, $arrray1, $array2) = @_; #taking in two array references
-	my @removedirs = @$array1; @inputdir = @$array2; #dereferencing them
+	my ($output_dir_root, $removedirs_ref, $inputdir_ref) = @_; #taking in two array references
+	my @removedirs = @$removedirs_ref; my @inputdir = @$inputdir_ref; #dereferencing them
 	foreach my $index (0 .. $#removedirs) {
 		my $index_of_path = $removedirs[$index];
 		print "\nOk to remove temp dir?: $inputdir[$index_of_path]\n1 for yes\t";
