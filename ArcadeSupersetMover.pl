@@ -25,7 +25,7 @@ undef $ARGV[1]? $output_dir_root = $ARGV[1] : $output_dir_root = 'F:\\Arcade\\TR
 
 my @inputdir = ( #yes you have to set these here - search dirs - no trailing \ please!!!!
     'F:\Arcade\MAME\mameui\snap\snap.zip',
-    'F:\Arcade\SCREENSHOTS\FBA_nonMAME_screenshots\BASTARDOOOOOOOOOOOOOOOOOO',
+    'F:\Arcade\SCREENSHOTS\FBA_nonMAME_screenshots',
     'F:\Sega Games\HazeMD\HazeMD\snap',
     'F:\Arcade\SCREENSHOTS\Winkawaks_NONMAME_screenshots',
 );
