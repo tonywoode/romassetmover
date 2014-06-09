@@ -37,13 +37,14 @@ my %filetypes = (
 		"Roms"    => ".zip",
 );
 
+
 #Main program
 my ($array1, $array2) = CheckInputs($inputfile, $output_dir_root, @inputdir); 	#Regurgitate your inputs and sort out any zips
 my @removedirs = @$array1; @inputdir = @$array2; 		#dereference the above arrays - first holds index of any folders to remove at the end....
 
 my ($optype, $filetype) = OpChoice(%filetypes); 		#What are we doing and what filetype does that mean we'll look for?
 print "Simulate by default (just hit return), or enter '1' now to COPY\t";
-my ($copy ) 			= Choice();					#are we copying or not?
+my ($copy ) 			= Choice();						#are we copying or not?
 OpenFileDirs($output_dir_root, $optype, $copy);			#we name the output files and folders by operation type
 my ($dat_line) 			= ParseQPFile();				#we understand what a QP datafile looks like
 
@@ -66,6 +67,7 @@ if (@removedirs) { RemoveTempDirs($output_dir_root, \@removedirs, \@inputdir);	}
 
 sub CheckInputs{
 	my($inputfile, $output_dir_root, @inputdir) = @_; #need the inputs you set above
+	
 	my @removedirs;
 	print "\n\n" . "*" x 30 . "\n\n Romdata Asset Matching Tool\n\n" . "*" x 30 . "\n\n";
 	$inputfile 				eq ''? die "Quiting - You didn't set an input file\n" : print "Input file set to:\n $inputfile\n\n";
@@ -73,7 +75,7 @@ sub CheckInputs{
 	if ( scalar @inputdir == 0 ) { die "Quiting - You didn't pass me any input directories\n"; }
 	else { foreach my $index ( 0 .. $#inputdir ) { 
 		print "Input directory $index set to $inputdir[$index]\n"; 
-		if	(! -e "$inputdir[$index]" ) {die "Sorry that dir doesn't exist, exiting\n"; } #you'll have to delete the temp dirs yourself.....
+		if	(! -e "$inputdir[$index]" ) {die "Sorry that dir doesn't exist, exiting\n"; } #you'll have to delete any temp dirs yourself.....
 		(my $index_removedir, @inputdir) = CheckForZips($index, @inputdir); 
 		if (defined $index_removedir) { push (@removedirs, $index_removedir); }
 		}
@@ -113,6 +115,7 @@ sub UnZip { #Uncompress zip archive at this array index, REPLACE the array index
 
 sub OpChoice{
 	my %filetypes = @_; #all we neeed is a list of filetypes and user input
+	
 	my ($optype, $filetype);
 	my @menu_array; foreach my $keys (keys %filetypes) { push @menu_array, $keys }; 					#push the keys into array for the menu
 	print "\nWhat do you want to compare?\n";
@@ -162,7 +165,7 @@ sub scanLine {#need a line of romdata, a line format, a directory the files are 
     chomp $line;
     if ( $line =~ /^$dat_line/ ) {
 		my $mamename   = $2;    #the name of the mame asset we're looking for is the 3rd field
-        my $mameparent = $3;    #that rom's parentis the 4th		
+        my $mameparent = $3;    #that rom's parent is the 4th		
 		
 		my $found_index = -1;
 		my $parent = 0;			
@@ -195,8 +198,7 @@ sub Report {
 	
 	if ($foundpath eq '') { 
 		$notthere++; 
-		print "Can't find\t:\t$mamename\n"; 
-		print MISSFILE "Can't find\t=\t$mamename\n"; 
+		print "Can't find\t:\t$mamename\n"; print MISSFILE "Can't find\t=\t$mamename\n"; 
 		}
 	if ($foundpath ne '') { 
 		$there++; 
@@ -229,16 +231,14 @@ sub CloseFileDirs {
     close(COPYFILE);
 }
 
-sub RemoveTempDirs() {
-	my ($output_dir_root, $arrray1, $array2) = @_; #taking in two arrays
-	my @removedirs = @$array1; @inputdir = @$array2;
+sub RemoveTempDirs {
+	my ($output_dir_root, $arrray1, $array2) = @_; #taking in two array references
+	my @removedirs = @$array1; @inputdir = @$array2; #dereferencing them
 	foreach my $index (0 .. $#removedirs) {
 		my $index_of_path = $removedirs[$index];
 		print "\nOk to remove temp dir?: $inputdir[$index_of_path]\n1 for yes\t";
 		my ($delete) = Choice();
-		if ($delete) { 
-			remove_tree($inputdir[$index_of_path]); 
-		}
+		if ($delete) { remove_tree($inputdir[$index_of_path]); }
 	}
 	if ( -e "$output_dir_root\\deleteme") { remove_tree	"$output_dir_root\\deleteme" } #we made a dir to keep the temps in, delete it at the end...
 }
