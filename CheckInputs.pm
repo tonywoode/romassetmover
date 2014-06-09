@@ -2,7 +2,7 @@ use strict;
 use warnings;
 
 sub CheckInputs{
-	my($inputfile, $output_dir_root, @inputdir) = @_; #need the inputs you set above
+	my($SEVEN_ZIP_PATH, $inputfile, $output_dir_root, @inputdir) = @_; #need the inputs you set above
 	
 	my @removedirs;
 	my $invalid_input;
@@ -13,7 +13,7 @@ sub CheckInputs{
 	else { VALID: foreach my $index ( 0 .. $#inputdir ) { 
 		print "Input directory $index set to $inputdir[$index]\n"; 
 		if	(! -e "$inputdir[$index]" ) { $invalid_input = "$inputdir[$index]"; last VALID; }
-		(my $index_removedir, @inputdir) = CheckForZips($index, @inputdir); 
+		(my $index_removedir, @inputdir) = CheckForZips($SEVEN_ZIP_PATH, $output_dir_root, $index, @inputdir); 
 		if (defined $index_removedir) { push (@removedirs, $index_removedir); }
 		}
 	}

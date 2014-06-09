@@ -12,6 +12,7 @@ use warnings;
 #use diagnostics;
 require Choice;
 require CheckInputs;
+require CheckForZips;
 
 use File::Copy qw(copy);
 use File::Path qw(make_path remove_tree);
@@ -42,7 +43,7 @@ my %filetypes = (
 
 
 #Main program
-my ($removedir_ref, $inputdir_ref, $invalid_input) = CheckInputs($inputfile, $output_dir_root, @inputdir); 	#Regurgitate your inputs and sort out any zips
+my ($removedir_ref, $inputdir_ref, $invalid_input) = CheckInputs($SEVEN_ZIP_PATH, $inputfile, $output_dir_root, @inputdir); 	#Regurgitate your inputs and sort out any zips
 my @removedirs = @$removedir_ref; @inputdir = @$inputdir_ref; 		#dereference the above arrays - first holds index of any folders to remove at the end....
 if ($invalid_input) { # if there was a problem, get rid of any work done so far....
 		print "Sorry the input dir $invalid_input can't be reached, exiting\n";
@@ -70,35 +71,7 @@ if (@removedirs) { RemoveTempDirs($output_dir_root, \@removedirs, \@inputdir);	}
 
 #SUBS--------------------------------------------------------------------
 
-sub CheckForZips {
-	my ($index, @inputdir) = @_;
-	my $index_removedir;
 	
-	my ($name, $path, $ext) = ( fileparse($inputdir[$index], qr/\.[^.]*/) );
-	#print "ext is\t$ext\n"; #print "name is\t$name\n"; #print "path is\t$path\n";
-	$ext = lc("$ext");
-	if ($ext eq '.zip' || $ext eq '.7z') { 
-		($index_removedir, @inputdir) = UnZip($index, $name, @inputdir); 
-	}
-	return ($index_removedir, @inputdir)#pass up the details of any replaced indexes so we can delete the dir later....
-}
-
-sub UnZip { #Uncompress zip archive at this array index, REPLACE the array index with the new loaction, flag theres a folder to delete at the end
-	my ($index, $name, @inputdir) = @_; 
-	
-	my $unzip_dir = "$output_dir_root\\deleteme\\$name";
-	print "\t$inputdir[$index] is an archive file\n\tMade temp dir at $unzip_dir\nUnzipping...";
-	
-	my $output = `\"$SEVEN_ZIP_PATH\" -y e \"$inputdir[$index]\" -o\"$unzip_dir\"`;		#https://uk.answers.yahoo.com/question/index?qid=20130128061122AAIubF5
-																#note the -o must touch the output dir. its a 7zip thing not perl.  -y assumes yes to all promps
-	if ($output =~ /Everything is Ok/g){ print "\nUnzip Complete - All OK\n"; }
-	else{ die "\nSomething went wrong with the Unzip, exiting (try unzipping it yourself)\n"; } 
-	
-	$inputdir[$index]= $unzip_dir;			#now we have the zip, we have to change the array
-	
-	my $index_removedir = $index; 			#we'll remove the folder at this location when we're done
-	return ($index_removedir, @inputdir); 	#...so return that index and the new dir
-}	
 
 sub OpChoice{
 	my %filetypes = @_; #all we neeed is a list of filetypes and user input
