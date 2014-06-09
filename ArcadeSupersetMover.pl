@@ -13,6 +13,8 @@ use warnings;
 require Choice;
 require CheckInputs;
 require CheckForZips;
+require OpChoice;
+require RemoveTempDirs;
 
 use File::Copy qw(copy);
 use File::Path qw(make_path remove_tree);
@@ -73,21 +75,7 @@ if (@removedirs) { RemoveTempDirs($output_dir_root, \@removedirs, \@inputdir);	}
 
 	
 
-sub OpChoice{
-	my %filetypes = @_; #all we neeed is a list of filetypes and user input
-	
-	my ($optype, $filetype);
-	my @menu_array; foreach my $keys (keys %filetypes) { push @menu_array, $keys }; 					#push the keys into array for the menu
-	print "\nWhat do you want to compare?\n";
-    for ( my $index = 0 ; $index < $#menu_array + 1 ; $index++ ) { print "\n\t$index)$menu_array[$index]\n"; }
-    my $menu_item = <STDIN>;
-    if ( $menu_item =~ /^[\+]?[0-$#menu_array]*\.?[0-$#menu_array]*$/ && $menu_item !~ /^[\. ]*$/ ){    #if its a number, and a number from the menu...
-        $optype = $menu_array[$menu_item]; print "\nYou chose $optype\t";      	  						#we get our operation type...
-		$filetype = $filetypes{$optype}; print "So I'm going to look for:\t$filetype\n\n";
-	} 
-    else { die "\nNo, that's not sensible. Try again with a choice that's in the menu\n"; }
-    return $optype, $filetype;
-}
+
 
 
 sub OpenFileDirs {
@@ -182,14 +170,4 @@ sub CloseFileDirs {
     close(COPYFILE);
 }
 
-sub RemoveTempDirs {
-	my ($output_dir_root, $removedirs_ref, $inputdir_ref) = @_; #taking in two array references
-	my @removedirs = @$removedirs_ref; my @inputdir = @$inputdir_ref; #dereferencing them
-	foreach my $index (0 .. $#removedirs) {
-		my $index_of_path = $removedirs[$index];
-		print "\nOk to remove temp dir?: $inputdir[$index_of_path]\n1 for yes\t";
-		my ($delete) = Choice();
-		if ($delete) { remove_tree($inputdir[$index_of_path]); }
-	}
-	if ( -e "$output_dir_root\\deleteme") { remove_tree	"$output_dir_root\\deleteme" } #we made a dir to keep the temps in, delete it at the end...
-}
+
