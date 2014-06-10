@@ -75,21 +75,20 @@ if (@removedirs) { RemoveTempDirs($output_dir_root, \@removedirs, \@inputdir);	}
 sub OpenFileDirs {
 	my ($output_dir_root, $optype, $copy) = @_; # need to know the root output dir, the type of asset to name folders, and whether we are copying
 	
-	#open( $INPUTDATFILE, $inputfile ) or die "Cannot open input dat file\n";
 	open(my $INPUTDATFILE, "<", $inputfile) || die "Couldn't open '".$inputfile."' for reading because: ".$!;
 	
-	my $havefile = "$output_dir_root\\Have$optype.txt"; #open( $HAVEFILE, ">$havefile" );
+	my $havefile = "$output_dir_root\\Have$optype.txt";
 	open(my $HAVEFILE, ">", $havefile) || die "Couldn't open '".$havefile."' for reading because: ".$!;
 	
-	my $missfile = "$output_dir_root\\Miss$optype.txt";# open( $MISSFILE, ">$missfile" );
+	my $missfile = "$output_dir_root\\Miss$optype.txt";
 	open(my $MISSFILE, ">", $missfile) || die "Couldn't open '".$missfile."' for reading because: ".$!;
 	
-    my $parentchildfile = "$output_dir_root\\ParentChild$optype.txt"; #open( $PARENTCHILDFILE, ">$parentchildfile" );
+    my $parentchildfile = "$output_dir_root\\ParentChild$optype.txt";
 	open(my $PARENTCHILDFILE, ">", $parentchildfile) || die "Couldn't open '".$parentchildfile."' for reading because: ".$!;
 	
-	if ($copy) {my $copyfile = "$output_dir_root\\Copy$optype.txt"; #open( $COPYFILE, ">$copyfile" ); }
+	my $copyfile = "$output_dir_root\\Copy$optype.txt";		
 	open(my $COPYFILE, ">", $copyfile) || die "Couldn't open '".$copyfile."' for reading because: ".$!;
-	}
+	
 	return ($INPUTDATFILE, $HAVEFILE, $MISSFILE, $PARENTCHILDFILE, $COPYFILE);
 }
 
