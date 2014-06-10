@@ -17,6 +17,8 @@ require CheckForZips;
 require OpChoice;
 require ParseQPFile;
 require ScanLine;
+require Report;
+require Copy;
 require RemoveTempDirs;
 
 
@@ -61,12 +63,17 @@ print "Simulate by default (just hit return), or enter '1' now to COPY\t";
 my ($copy ) 			= Choice();						#are we copying or not?
 my ($INPUTDATFILE, $HAVEFILE, $MISSFILE, $PARENTCHILDFILE, $COPYFILE) = OpenFileDirs($output_dir_root, $optype, $copy);			#we name the output files and folders by operation type
 my ($dat_line) 			= ParseQPFile($INPUTDATFILE);	#we understand what a QP datafile looks like
-my($there, $notthere);									#sigh...need to init before the report loop
+my ($there, $notthere);
+my ($present);									#sigh...need to init before the report loop
 while (my $line = <$INPUTDATFILE> ) {					#we scan for the roms in the input, report what we found, and copy if appropriate
 	   my ( $foundpath, $mamename, $parent, $found_index ) = ScanLine($line, $dat_line, $filetype, $optype, @inputdir );
-	   Report($foundpath, $mamename,$parent, $found_index, $there, $notthere);
+	   ($present) = Report($MISSFILE, $HAVEFILE, $PARENTCHILDFILE, $foundpath, $mamename,$parent, $found_index);
+	   if ($present= 1) { $there++; }
+	   if ($present = 0) {$notthere++;}
+	printf "%-50s %10u", "\nnumber of mamenames present as child or parent:\t", ( defined $there ? 	  "$there" : "0" );
+	printf "%-46s %10u", "\nnumber of mamenames not found:\t", 					( defined $notthere ? "$notthere" : "0" );	   
 	   unless ($optype eq 'Roms' && $parent == 1) {		#now copy - never copy a parent rom as child name
-			   if ($copy && $foundpath ne '') { Copy($output_dir_root, $optype, $parent, $foundpath, $mamename); }
+			   if ($copy && $foundpath ne '') { Copy($COPYFILE, $output_dir_root, $optype, $parent, $foundpath, $mamename, $filetype); }
 	   }
 }
 
@@ -94,37 +101,7 @@ sub OpenFileDirs {
 	
 	return ($INPUTDATFILE, $HAVEFILE, $MISSFILE, $PARENTCHILDFILE, $COPYFILE);
 }
-
-sub Report {
-	my ($foundpath, $mamename, $parent, $found_index) = @_; #need a whole bunch of info for logging
-	
-	if ($foundpath eq '') { 
-		$notthere++; 
-		print "Can't find\t:\t$mamename\n"; print $MISSFILE "Can't find\t=\t$mamename\n"; 
-		}
-	if ($foundpath ne '') { 
-		$there++; 
-		if 		($parent == 0) {
-				printf $HAVEFILE ( "%-15s %-25s %-15s", "$mamename", "Found Child in path $found_index", " = $foundpath\n" );
-		}
-		elsif 	($parent == 1) {
-				printf $PARENTCHILDFILE ( "%-15s %-25s %-15s", "$mamename", "No child, but Parent is in path$found_index", " = $foundpath\n" );
-		}
-	}
-	printf "%-50s %10u", "\nnumber of mamenames present as child or parent:\t", ( defined $there ? 	  "$there" : "0" );
-	printf "%-46s %10u", "\nnumber of mamenames not found:\t", 					( defined $notthere ? "$notthere" : "0" );
-}
 		
-sub Copy {
-	my ($output_dir_root, $optype, $parent, $foundpath, $mamename) = @_;
-	
-	my $this_outputdir = "$output_dir_root\\$optype"; make_path $this_outputdir;
-	if ($parent == 1) { $this_outputdir .= "\\parentchild"; } make_path $this_outputdir;
-		my $outputfile = "$this_outputdir\\$mamename$filetype";
-		print "\nCopying...\n";
-		print $COPYFILE "Copying $foundpath to $outputfile\n"; copy $foundpath, $outputfile; 
-}
-
 sub CloseFileDirs {
     close($INPUTDATFILE);
     close($HAVEFILE);
