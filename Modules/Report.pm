@@ -4,13 +4,14 @@ use warnings;
 sub Report {
 	my ($MISSFILE, $HAVEFILE, $PARENTCHILDFILE, $foundpath, $mamename, $parent, $found_index) = @_; 
 	#need a whole bunch of info for logging, not acceptable really.....
-	my $there = 0;
+	my $present = 0;
 	
 	if ($foundpath eq '') { 
-		$there; 
+		
 		print "Can't find\t:\t$mamename\n"; print $MISSFILE "Can't find\t=\t$mamename\n"; 
 		}
-	if ($foundpath ne '') {  
+	if ($foundpath ne '') { 
+		$present = 1; 
 		if 		($parent == 0) {
 				printf $HAVEFILE ( "%-15s %-25s %-15s", "$mamename", "Found Child in path $found_index", " = $foundpath\n" );
 		}
@@ -20,7 +21,7 @@ sub Report {
 	}
 
 	
-	return ($there);
+	return ($present);
 }
 
 return 1;

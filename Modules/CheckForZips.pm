@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 
-require UnZip;
+require MOdules::UnZip;
 
 sub CheckForZips {
 	my ($SEVEN_ZIP_PATH, $output_dir_root, $index, @inputdir) = @_;

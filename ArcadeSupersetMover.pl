@@ -16,15 +16,15 @@ use File::Path qw(make_path remove_tree);
 use File::Basename;
 
 #the modules we've split out
-require Choice;
-require CheckInputs;
-require CheckForZips;
-require OpChoice;
-require ParseQPFile;
-require ScanLine;
-require Report;
-require Copy;
-require RemoveTempDirs;
+require Modules::Choice;
+require Modules::CheckInputs;
+require Modules::CheckForZips;
+require Modules::OpChoice;
+require Modules::ParseQPFile;
+require Modules::ScanLine;
+require Modules::Report;
+require Modules::Copy;
+require Modules::RemoveTempDirs;
 
 my $SEVEN_ZIP_PATH = 'C:\Program Files\7-Zip\7z.exe';
 
@@ -78,8 +78,8 @@ my ($there, $notthere, $present); #need to init before the report loop, present 
 while (my $line = <$INPUTDATFILE> ) {					
 		my ( $foundpath, $mamename, $parent, $found_index ) = ScanLine($line, $dat_line, $filetype, $optype, @inputdir );
 		($present) = Report($MISSFILE, $HAVEFILE, $PARENTCHILDFILE, $foundpath, $mamename,$parent, $found_index);
-		if ($present= 1) { $there++; }
-		if ($present = 0) {$notthere++;}
+		if ($present == 1) { $there++; }
+		if ($present == 0) {$notthere++;}
 		printf "%-50s %10u", "\nnumber of mamenames present as child or parent:\t", ( defined $there ? 	  "$there" : "0" );
 		printf "%-46s %10u", "\nnumber of mamenames not found:\t", 					( defined $notthere ? "$notthere" : "0" );	   
 		unless ($optype eq 'Roms' && $parent == 1) {		#now copy - never copy a parent rom as child name
@@ -93,7 +93,7 @@ print "\nFinished\n";
 #did we unarchive temporarily? remove if so
 if (@removedirs) { RemoveTempDirs($output_dir_root, \@removedirs, \@inputdir);	}#pass references to arrays
 
-print "\Exiting\n";
+print "\nExiting\n";
 
 
 #LOCAL SUBS--------------------------------------------------------------------
@@ -102,7 +102,7 @@ sub OpenFileDirs {
 	
 	open(my $INPUTDATFILE, "<", $inputfile) || die "Couldn't open '".$inputfile."' for reading because: ".$!;
 	
-	#boiler plate openeing of the four filetypes
+	#boiler plate opening of the four filetypes
 	my $havefile = "$output_dir_root\\Have$optype.txt"; open(my $HAVEFILE, ">", $havefile) || die "Couldn't open '".$havefile."' for reading because: ".$!;
 	my $missfile = "$output_dir_root\\Miss$optype.txt"; open(my $MISSFILE, ">", $missfile) || die "Couldn't open '".$missfile."' for reading because: ".$!;
     my $parentchildfile = "$output_dir_root\\ParentChild$optype.txt"; open(my $PARENTCHILDFILE, ">", $parentchildfile) || die "Couldn't open '".$parentchildfile."' for reading because: ".$!;
