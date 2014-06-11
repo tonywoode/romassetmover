@@ -22,20 +22,10 @@ my ($inputfile, $output_dir_root);
 undef $ARGV[0]? $inputfile = $ARGV[0] 		: $inputfile = 'C:\Emulators\QUICKPLAY\qp\data\Arcade\FinalBurn Alpha\ROMDATA.dat'; #Input file = first cmd arg or what's here
 undef $ARGV[1]? $output_dir_root = $ARGV[1] : $output_dir_root = 'F:\\Arcade\\TRANSIT';  #output dir is the 2nd cmd arg or what's here
 
-my @inputdir = ( #yes you have to set these here - search dirs - no trailing \ please!!!!
-    'F:\Arcade\MAME\mameui\snap\snap.zip',
-    'F:\Arcade\SCREENSHOTS\FBA_nonMAME_screenshots',
-    'F:\Sega Games\HazeMD\HazeMD\snap',
-    'F:\Arcade\SCREENSHOTS\Winkawaks_NONMAME_screenshots',
-);
+my @inputdir = do 'Inputdirs.txt';
 
 ##### INPUT YOUR ASSET AND FILTYPES HERE ######
-my %filetypes = (       
-        "Screens" => ".png",
-        "Titles"  => ".png",
-        "Icons"   => ".ico",
-		"Roms"    => ".zip",
-);
+my %filetypes = do 'Filetypes.txt';
 
 ##### Main program #####
 print "\n\n" . "*" x 30 . "\n\n Romdata Asset Matching Tool\n\n" . "*" x 30 . "\n\n";
