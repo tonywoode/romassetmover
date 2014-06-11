@@ -1,14 +1,14 @@
 #!/usr/bin/perl -w
 #
 # Takes as inputs: a quickplay datfile, and a collection of dir paths where mame assets are.
-# In order, it tries to find the mame names of the items in the datfile in each path. It can then copy the assets found to an output dir.
+# 	In order, it tries to find the mame names of the items in the datfile in each path. It can then copy the assets found to an output dir.
 #
 # We deal with zips AND 7Zips by using 7zip to unpack
 #
 # Because mame-roms have a parent/child relationship, if we don't find the asset, we try and find it's parent and use its asset. (That may or may not
-# be helpful so its stored in a subfolder. It certainly ISN'T helpful for the ROM itself so we turn it off (we don't want Street Fighter 2 Brazil to 
-# turn out to be Street Fighter 2 World - the point of the parent/child relationship is to ditinguish them)
-#use diagnostics;
+# 	be helpful so its stored in a subfolder. It certainly ISN'T helpful for the ROM itself so we turn it off (we don't want Street Fighter 2 Brazil to 
+# 	turn out to be Street Fighter 2 World - the point of the parent/child relationship is to ditinguish them)
+#	use diagnostics;
 use strict;
 use warnings;
 use File::Copy qw(copy);
@@ -49,7 +49,7 @@ my %filetypes = (
 );
 
 ##### Main program #####
-
+print "\n\n" . "*" x 30 . "\n\n Romdata Asset Matching Tool\n\n" . "*" x 30 . "\n\n";
 #First regurgitate your inputs and sort out any zips
 my ($removedir_ref, $inputdir_ref, $invalid_input) = CheckInputs($SEVEN_ZIP_PATH, $inputfile, $output_dir_root, @inputdir); 	
 my @removedirs = @$removedir_ref; @inputdir = @$inputdir_ref; #dereference the above arrays - first holds index of any folders to remove at the end.... 		
