@@ -37,51 +37,51 @@ sub Choice {
 }
 
 sub CheckInputs{
-	my($SEVEN_ZIP_PATH, $inputfile, $output_dir_root, @inputdir) = @_; #need the inputs you set above
+	my($SEVEN_ZIP_PATH, $inputfile, $output_dir_root, @inputdirs) = @_; #need the inputs you set above
 	
 	my @removedirs;
 	my $invalid_input;
 	$inputfile 				eq ''? die "Quiting - You didn't set an input file\n" : print "Input file set to:\n $inputfile\n\n";
 	$output_dir_root 		eq ''? die "Quiting - You didn't set an output dir\n" : print "Output directory set to:\n $output_dir_root\n\n";
-	if ( scalar @inputdir == 0 ) { die "Quiting - You didn't pass me any input directories\n"; }
-	else { VALID: foreach my $index ( 0 .. $#inputdir ) { 
-		print "Input directory $index set to $inputdir[$index]\n"; 
-		if	(! -e "$inputdir[$index]" ) { $invalid_input = "$inputdir[$index]"; last VALID; }
-		(my $index_removedir, @inputdir) = CheckForZips($SEVEN_ZIP_PATH, $output_dir_root, $index, @inputdir); 
+	if ( scalar @inputdirs == 0 ) { die "Quiting - You didn't pass me any input directories\n"; }
+	else { VALID: foreach my $index ( 0 .. $#inputdirs ) { 
+		print "Input directory $index set to $inputdirs[$index]\n"; 
+		if	(! -e "$inputdirs[$index]" ) { $invalid_input = "$inputdirs[$index]"; last VALID; }
+		(my $index_removedir, @inputdirs) = CheckForZips($SEVEN_ZIP_PATH, $output_dir_root, $index, @inputdirs); 
 		if (defined $index_removedir) { push (@removedirs, $index_removedir); }
 		}
 	}
-	return (\@removedirs, \@inputdir, $invalid_input); #return references to the arrays, can't return two arrays
+	return (\@removedirs, \@inputdirs, $invalid_input); #return references to the arrays, can't return two arrays
 }
 
 sub CheckForZips {
-	my ($SEVEN_ZIP_PATH, $output_dir_root, $index, @inputdir) = @_;
+	my ($SEVEN_ZIP_PATH, $output_dir_root, $index, @inputdirs) = @_;
 	my $index_removedir;
 	
-	my ($name, $path, $ext) = ( fileparse($inputdir[$index], qr/\.[^.]*/) );
+	my ($name, $path, $ext) = ( fileparse($inputdirs[$index], qr/\.[^.]*/) );
 	#print "ext is\t$ext\n"; #print "name is\t$name\n"; #print "path is\t$path\n";
 	$ext = lc("$ext");
 	if ($ext eq '.zip' || $ext eq '.7z') { 
-		($index_removedir, @inputdir) = UnZip($SEVEN_ZIP_PATH, $output_dir_root, $index, $name, @inputdir); 
+		($index_removedir, @inputdirs) = UnZip($SEVEN_ZIP_PATH, $output_dir_root, $index, $name, @inputdirs); 
 	}
-	return ($index_removedir, @inputdir)#pass up the details of any replaced indexes so we can delete the dir later....
+	return ($index_removedir, @inputdirs)#pass up the details of any replaced indexes so we can delete the dir later....
 }
 
 sub UnZip { #Uncompress zip archive at this array index, REPLACE the array index with the new loaction, flag theres a folder to delete at the end
-	my ($SEVEN_ZIP_PATH, $output_dir_root, $index, $name, @inputdir) = @_; 
+	my ($SEVEN_ZIP_PATH, $output_dir_root, $index, $name, @inputdirs) = @_; 
 	
 	my $unzip_dir = "$output_dir_root\\deleteme\\$name";
-	print "\t$inputdir[$index] is an archive file\n\tMade temp dir at $unzip_dir\nUnzipping...";
+	print "\t$inputdirs[$index] is an archive file\n\tMade temp dir at $unzip_dir\nUnzipping...";
 	
-	my $output = `\"$SEVEN_ZIP_PATH\" -y e \"$inputdir[$index]\" -o\"$unzip_dir\"`;		#https://uk.answers.yahoo.com/question/index?qid=20130128061122AAIubF5
+	my $output = `\"$SEVEN_ZIP_PATH\" -y e \"$inputdirs[$index]\" -o\"$unzip_dir\"`;		#https://uk.answers.yahoo.com/question/index?qid=20130128061122AAIubF5
 																#note the -o must touch the output dir. its a 7zip thing not perl.  -y assumes yes to all promps
 	if ($output =~ /Everything is Ok/g){ print "\nUnzip Complete - All OK\n"; }
 	else{ die "\nSomething went wrong with the Unzip, exiting (try unzipping it yourself)\n"; } 
 	
-	$inputdir[$index]= $unzip_dir;			#now we have the zip, we have to change the array
+	$inputdirs[$index]= $unzip_dir;			#now we have the zip, we have to change the array
 	
 	my $index_removedir = $index; 			#we'll remove the folder at this location when we're done
-	return ($index_removedir, @inputdir); 	#...so return that index and the new dir
+	return ($index_removedir, @inputdirs); 	#...so return that index and the new dir
 }
 
 sub ParseQPFile {
@@ -96,7 +96,7 @@ sub ParseQPFile {
 }
 
 sub ScanLine {#need a line of romdata, a line format, a directory the files are in and their type, and the operation
-	my($line, $dat_line, $filetype, @inputdir ) = @_;
+	my($line, $dat_line, $filetype, @inputdirs ) = @_;
 	
     chomp $line;
     if ( $line =~ /^$dat_line/ ) {
@@ -110,15 +110,15 @@ sub ScanLine {#need a line of romdata, a line format, a directory the files are 
 		print "\nScanning...\n";
 			
 		MAMESEARCH:until ($foundpath) {
-              foreach my $path (0 .. $#inputdir) {	  
-                    if		( $mamename ne '' && -e "$inputdir[$path]\\$mamename$filetype" ) { 
-							$foundpath = "$inputdir[$path]\\$mamename$filetype"; 
+              foreach my $path (0 .. $#inputdirs) {	  
+                    if		( $mamename ne '' && -e "$inputdirs[$path]\\$mamename$filetype" ) { 
+							$foundpath = "$inputdirs[$path]\\$mamename$filetype"; 
 							$found_index = $path; 
 							last MAMESEARCH;
 					}
-					elsif	( $mameparent ne '' && -e "$inputdir[$path]\\$mameparent$filetype" ){
+					elsif	( $mameparent ne '' && -e "$inputdirs[$path]\\$mameparent$filetype" ){
 							$parent = 1; 
-							$foundpath = "$inputdir[$path]\\$mameparent$filetype"; 
+							$foundpath = "$inputdirs[$path]\\$mameparent$filetype"; 
 							$found_index = $path; 
 							last MAMESEARCH;
 					}   
@@ -164,13 +164,13 @@ sub Copy {
 }
 
 sub RemoveTempDirs {
-	my ($output_dir_root, $removedirs_ref, $inputdir_ref) = @_; #taking in two array references
-	my @removedirs = @$removedirs_ref; my @inputdir = @$inputdir_ref; #dereferencing them
+	my ($output_dir_root, $removedirs_ref, $inputdirs_ref) = @_; #taking in two array references
+	my @removedirs = @$removedirs_ref; my @inputdirs = @$inputdirs_ref; #dereferencing them
 	foreach my $index (0 .. $#removedirs) {
 		my $index_of_path = $removedirs[$index];
-		print "\nOk to remove temp dir?: $inputdir[$index_of_path]\n1 for yes\t";
+		print "\nOk to remove temp dir?: $inputdirs[$index_of_path]\n1 for yes\t";
 		my ($delete) = Choice();
-		if ($delete) { remove_tree($inputdir[$index_of_path]); }
+		if ($delete) { remove_tree($inputdirs[$index_of_path]); }
 	}
 	if ( -e "$output_dir_root\\deleteme") { remove_tree "$output_dir_root\\deleteme" } #we made a dir to keep the temps in, delete it at the end...
 }

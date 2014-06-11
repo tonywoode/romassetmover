@@ -22,7 +22,7 @@ my ($inputfile, $output_dir_root);
 undef $ARGV[0]? $inputfile = $ARGV[0] 		: $inputfile = 'C:\Emulators\QUICKPLAY\qp\data\Arcade\FinalBurn Alpha\ROMDATA.dat'; #Input file = first cmd arg or what's here
 undef $ARGV[1]? $output_dir_root = $ARGV[1] : $output_dir_root = 'F:\\Arcade\\TRANSIT';  #output dir is the 2nd cmd arg or what's here
 
-my @inputdir = do 'Inputdirs.txt';
+my @inputdirs = do 'Inputdirs.txt';
 
 ##### INPUT YOUR ASSET AND FILTYPES HERE ######
 my %filetypes = do 'Filetypes.txt';
@@ -30,12 +30,12 @@ my %filetypes = do 'Filetypes.txt';
 ##### Main program #####
 print "\n\n" . "*" x 30 . "\n\n Romdata Asset Matching Tool\n\n" . "*" x 30 . "\n\n";
 #First regurgitate your inputs and sort out any zips
-my ($removedir_ref, $inputdir_ref, $invalid_input) = CheckInputs($SEVEN_ZIP_PATH, $inputfile, $output_dir_root, @inputdir); 	
-my @removedirs = @$removedir_ref; @inputdir = @$inputdir_ref; #dereference the above arrays - first holds index of any folders to remove at the end.... 		
+my ($removedir_ref, $inputdirs_ref, $invalid_input) = CheckInputs($SEVEN_ZIP_PATH, $inputfile, $output_dir_root, @inputdirs); 	
+my @removedirs = @$removedir_ref; @inputdirs = @$inputdirs_ref; #dereference the above arrays - first holds index of any folders to remove at the end.... 		
 
 if ($invalid_input) { # if there was a problem, get rid of any work done so far....
 		print "Sorry the input dir $invalid_input can't be reached, exiting\n";
-		if (@removedirs) { RemoveTempDirs($output_dir_root, \@removedirs, \@inputdir);	}
+		if (@removedirs) { RemoveTempDirs($output_dir_root, \@removedirs, \@inputdirs);	}
 		die "Quit: One of the input dirs isn't reachable\n";
 	}
 
@@ -55,7 +55,7 @@ my ($dat_line) 			= ParseQPFile($INPUTDATFILE);
 #we scan for the roms in the input, report what we found, and copy if appropriate
 my ($there, $notthere, $present); #need to init before the report loop, present is a boolean passed to the sub from which we keep count
 while (my $line = <$INPUTDATFILE> ) {					
-		my ( $foundpath, $mamename, $parent, $found_index ) = ScanLine($line, $dat_line, $filetype, $optype, @inputdir );
+		my ( $foundpath, $mamename, $parent, $found_index ) = ScanLine($line, $dat_line, $filetype, $optype, @inputdirs );
 		($present) = Report($MISSFILE, $HAVEFILE, $PARENTCHILDFILE, $foundpath, $mamename,$parent, $found_index);
 		if ($present == 1) { $there++; }
 		if ($present == 0) {$notthere++;}
@@ -70,7 +70,7 @@ CloseFileDirs();
 print "\nFinished\n";
 
 #did we unarchive temporarily? remove if so
-if (@removedirs) { RemoveTempDirs($output_dir_root, \@removedirs, \@inputdir);	}#pass references to arrays
+if (@removedirs) { RemoveTempDirs($output_dir_root, \@removedirs, \@inputdirs);	}#pass references to arrays
 
 print "\nExiting\n";
 
