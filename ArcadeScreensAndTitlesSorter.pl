@@ -11,13 +11,9 @@
 #use diagnostics;
 use strict;
 use warnings;
-use File::Copy qw(copy);
-use File::Path qw(make_path remove_tree);
-use File::Basename;
 
-#the modules we've split out
-require Modules::CheckInputs;
-require Modules::CheckForZips;
+#the subs we share
+use ArcadeTools::Shared ('CheckInputs','RemoveTempDirs','OpChoice','Choice','ParseQPFile','ScanLine','Copy','Report');
 
 my $SEVEN_ZIP_PATH = 'C:\Program Files\7-Zip\7z.exe';
 
@@ -38,3 +34,21 @@ my @inputdir;
 push @inputdir, $inputdirA;
 push @inputdir, $inputdirB;
 my ($removedir_ref, $inputdir_ref, $invalid_input) = CheckInputs($SEVEN_ZIP_PATH, "not relevant", $output_dir_root, @inputdir);
+my @removedirs = @$removedir_ref; @inputdir = @$inputdir_ref; #dereference the above arrays - first holds index of any folders to remove at the end.... 		
+print @inputdir;
+
+
+if ($invalid_input) { # if there was a problem, get rid of any work done so far....
+		print "Sorry the input dir $invalid_input can't be reached, exiting\n";
+		if (@removedirs) { RemoveTempDirs($output_dir_root, \@removedirs, \@inputdir);	}
+		die "Quit: One of the input dirs isn't reachable\n";
+	}
+
+#What are we doing and what filetype does that mean we'll look for?	
+my ($optype, $filetype) = OpChoice(%filetypes);
+
+#are we copying or not?
+print "Simulate by default (just hit return), or enter '1' now to COPY\t";
+my ($copy ) 			= Choice();	
+
+

@@ -11,20 +11,9 @@
 #	use diagnostics;
 use strict;
 use warnings;
-use File::Copy qw(copy);
-use File::Path qw(make_path remove_tree);
-use File::Basename;
 
-#the modules we've split out
-require Modules::Choice;
-require Modules::CheckInputs;
-require Modules::CheckForZips;
-require Modules::OpChoice;
-require Modules::ParseQPFile;
-require Modules::ScanLine;
-require Modules::Report;
-require Modules::Copy;
-require Modules::RemoveTempDirs;
+#the subs we share
+use ArcadeTools::Shared ('CheckInputs','RemoveTempDirs','OpChoice','Choice','ParseQPFile','ScanLine','Copy','Report');
 
 my $SEVEN_ZIP_PATH = 'C:\Program Files\7-Zip\7z.exe';
 
