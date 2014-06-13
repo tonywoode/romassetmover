@@ -11,7 +11,8 @@
 #use diagnostics;
 use strict;
 use warnings;
-
+use File::Find;
+use List::MoreUtils qw(uniq);
 
 
 #the subs we share
@@ -56,29 +57,54 @@ my ($copy ) 			= Choice();
 my ($HAVEFILE, $MISSFILE, $COPYFILE) = OpenFileDirs($output_dir_root, $optype);
 
 #we scan for the roms in the input, report what we found, and copy if appropriate
-# Simple diff -r --brief replacement
-opendir THISDIR, $inputdirs[1];
-my @allFiles = readdir THISDIR;
-closedir THISDIR;
 
-#need some way of restricting to filetype really, else why are we bothering with filetype.....
+my (%files1, %files2);
+my ($dir1) = $inputdirs[0];
+my ($dir2) = $inputdirs[1];
 
-foreach (@allFiles) {
-    if (-e "$inputdirs[1]/$_") {
-		unless ($_ eq '.' || $_ eq '..') {
-			print "$_ found in source $inputdirs[0] but not in target $inputdirs[1]\n";
-		}
-    }
+find( sub { -f, $files1{$_} = $File::Find::name }, $dir1);
+find( sub { -f, $files2{$_} = $File::Find::name }, $dir2);
+
+my @all = uniq(keys %files1, keys %files2);
+
+for my $file (@all) {
+	my $result;
+	if ($files1{$file} && $files2{$file}) { #file exists in both dirs
+		print "$file is in both dirs\n";#$result = qx(usr/bin/diff -q $files1{$file} $files2{$file}); #...etc
+	}
+	elsif ($files1{$file}) { #file only existsn in dir 1
+		print "$file is in $dir1\n";
+	}
+	else { #file only exists in dir 2
+		print "$file is in $dir2\n";
+	}
 }
-print "\nFinished checking target\n";
 
-opendir SOURCEDIR, $inputdirs[1];
-my @allSourceFiles = readdir SOURCEDIR;
-foreach (@allSourceFiles) {
-    unless (-e "$inputdirs[0]/$_") {
-        print "$_ found in target directory $inputdirs[1] but not in source $inputdirs[0]\n";
-    }
-}
+
+
+## Simple diff -r --brief replacement
+#opendir THISDIR, $inputdirs[1];
+#my @allFiles = readdir THISDIR;
+#closedir THISDIR;
+#
+##need some way of restricting to filetype really, else why are we bothering with filetype.....
+#
+#foreach (@allFiles) {
+#    if (-e "$inputdirs[1]/$_") {
+#		unless ($_ eq '.' || $_ eq '..') {
+#			print "$_ found in source $inputdirs[0] but not in target $inputdirs[1]\n";
+#		}
+#    }
+#}
+#print "\nFinished checking target\n";
+#
+#opendir SOURCEDIR, $inputdirs[1];
+#my @allSourceFiles = readdir SOURCEDIR;
+#foreach (@allSourceFiles) {
+#    unless (-e "$inputdirs[0]/$_") {
+#        print "$_ found in target directory $inputdirs[1] but not in source $inputdirs[0]\n";
+#    }
+#}
 
 
 
