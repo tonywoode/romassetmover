@@ -14,11 +14,8 @@ use warnings;
 use File::Find;
 use List::MoreUtils qw(uniq);
 
-
 #the subs we share
 use ArcadeTools::Shared ('CheckInputs','RemoveTempDirs','OpChoice','Choice','ParseQPFile','ScanLine','Copy','Report');
-
-
 
 my $SEVEN_ZIP_PATH = 'C:\Program Files\7-Zip\7z.exe';
 
@@ -28,9 +25,8 @@ undef $ARGV[0]? $output_dir_root = $ARGV[0] : $output_dir_root = 'F:\\Arcade\\TR
 
 ##### INPUT YOUR ASSET AND FILTYPES HERE ######
 my %full_filetypes = do 'Filetypes.txt'; my %filetypes;
-@filetypes{"Screens"} = @full_filetypes{"Screens"};
-@filetypes{"Titles"} = @full_filetypes{"Titles"};
-
+$filetypes{"Screens"} = @full_filetypes{"Screens"};
+$filetypes{"Titles"}  = @full_filetypes{"Titles"};
 
 ##### Main program #####
 print "\n\n" . "*" x 30 . "\n\nArcade Moving tools for Screens and Titles\n\n" . "*" x 30 . "\n";
@@ -57,30 +53,27 @@ my ($copy ) 			= Choice();
 my ($HAVEFILE, $MISSFILE, $COPYFILE) = OpenFileDirs($output_dir_root, $optype);
 
 #we scan for the roms in the input, report what we found, and copy if appropriate
-
 my (%files1, %files2);
-my ($dir1) = $inputdirs[0];
-my ($dir2) = $inputdirs[1];
 
-find( sub { -f, $files1{$_} = $File::Find::name }, $dir1);
-find( sub { -f, $files2{$_} = $File::Find::name }, $dir2);
+find( sub { -f, $files1{$_} = $File::Find::name }, $inputdirs[0]);							
+find( sub { -f, $files2{$_} = $File::Find::name }, $inputdirs[1]);
 
 my @all = uniq(keys %files1, keys %files2);
+my @uniq_files;
 
 for my $file (@all) {
-	my $result;
-	if ($files1{$file} && $files2{$file}) { #file exists in both dirs
-		print "$file is in both dirs\n";#$result = qx(usr/bin/diff -q $files1{$file} $files2{$file}); #...etc
+	if ($files1{$file} && $files2{$file} && $file ne '.') { #file exists in both dirs
+		print $HAVEFILE "$file is in both dirs\n";#$result = qx(usr/bin/diff -q $files1{$file} $files2{$file}); #...etc
 	}
 	elsif ($files1{$file}) { #file only existsn in dir 1
-		print "$file is in $dir1\n";
+		print $HAVEFILE "$file is in $inputdirs[0] and not in $inputdirs[1]\n";
 	}
 	else { #file only exists in dir 2
-		print "$file is in $dir2\n";
+		print $MISSFILE "$file is in $inputdirs[1] and not in $inputdirs[0]\n";
+		push @uniq_files, $file;
 	}
 }
-
-
+print "here are the files that aren't in MAME: @uniq_files";            
 
 ## Simple diff -r --brief replacement
 #opendir THISDIR, $inputdirs[1];
