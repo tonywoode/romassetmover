@@ -1,0 +1,2 @@
+#the root directory we'll ouput the folders and files we make to. Not trailing \ please.
+'F:\\Arcade\\TRANSIT'

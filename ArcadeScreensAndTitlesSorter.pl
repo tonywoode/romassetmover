@@ -4,31 +4,31 @@
 # 	and Icons are standalone (though can be in a shared folder, but probably shouldn't be). Screens and Titles as assets though, WILL display dupes
 # 	if they aren't unique.
 #
-# So this script simply does an AB comparison and moves to C: A is our
-# 	Mame asset folder, B is our Set's asset folder. Any unique names found in B that aren't in A will
-#	get moved to C. Once again we must deal with zips and 7zips as inputs
+# So this script simply does an AB comparison and moves to C: A is our Mame asset folder, B is our Set's asset folder. 
+#   Any unique names found in B that aren't in A will get moved to C. Once again we must deal with zips and 7zips as inputs, and clear them up.
 #
 #use diagnostics;
 use strict;
 use warnings;
 
 #the subs we share
-use ArcadeTools::Shared ('CheckInputs','RemoveTempDirs','OpChoice','Choice','SearchUniqInB','ScanLine','Copy','Report');
+use ArcadeTools::Shared ('CheckInputs','RemoveTempDirs','OpChoice','Choice','SearchUniqInB','Copy','Report');
 
 my $SEVEN_ZIP_PATH = 'C:\Program Files\7-Zip\7z.exe';
 
 my ($inputdirsA, $inputdirsB, $output_dir_root);
 ##### INPUT YOUR SEARCH DIRECTORIES HERE #####
-undef $ARGV[0]? $output_dir_root = $ARGV[0] : $output_dir_root = 'F:\\Arcade\\TRANSIT';  #output dir is the cmd arg or what's here
+undef $ARGV[0]? $output_dir_root = $ARGV[0] : $output_dir_root = do 'Outputdir.txt';;  #output dir is the cmd arg or what's here
 
-##### INPUT YOUR ASSET AND FILTYPES HERE ######
-my %full_filetypes = do 'Filetypes.txt'; my %filetypes;
+##### INPUT YOUR ASSET AND FILTYPES IN AssetTypes_Filetypes.txt ######
+my %full_filetypes = do 'AssetTypes_Filetypes.txt'; my %filetypes;
+#But for this script we're only interested in what you've put for screens and titles
 $filetypes{"Screens"} = $full_filetypes{"Screens"};
 $filetypes{"Titles"}  = $full_filetypes{"Titles"};
 
 ##### Main program #####
-print "\n\n" . "*" x 30 . "\n\nArcade Moving tools for Screens and Titles\n\n" . "*" x 30 . "\n";
-print "\n***I'll only consider the first TWO paths in inputdirs, and the first TWO filetypes***\n\n";
+print "\n\n" . "*" x 35 . "\n\nArcade Moving tool: Screens\\Titles\n\n" . "*" x 35 . "\n";
+print "\n***I'll only consider first 2 paths in inputdirs, and assets Screens/Titles***\n\n";
 my @allinputdirs = do 'Inputdirs.txt'; my @inputdirs;
 $inputdirs[0] = $allinputdirs[0]; $inputdirs[1] = $allinputdirs[1];
 my ($removedir_ref, $inputdirs_ref, $invalid_input) = CheckInputs($SEVEN_ZIP_PATH, "not relevant", $output_dir_root, @inputdirs);
@@ -45,11 +45,12 @@ my ($optype, $filetype) = OpChoice(%filetypes);
 
 #are we copying or not?
 print "Simulate by default (just hit return), or enter '1' now to COPY\t";
-my ($copy ) 			= Choice();	
+my ($copy ) = Choice();	
 
 #we name the output files and folders by operation type
 my ($HAVEFILE, $MISSFILE, $COPYFILE) = OpenFileDirs($output_dir_root, $optype);
 
+#now do the comparison of directories. We'll just log as we're going along...
 my %uniq_in_target = SearchUniqInB($filetype, $HAVEFILE, $MISSFILE, @inputdirs);
 
 if ( $copy && (keys %uniq_in_target != 0) ) { #if we found something and chose to copy
@@ -61,6 +62,12 @@ if ( $copy && (keys %uniq_in_target != 0) ) { #if we found something and chose t
 }
 
 CloseFileDirs();
+print "\nFinished\n";
+
+#did we unarchive temporarily? remove if so
+if (@removedirs) { RemoveTempDirs($output_dir_root, \@removedirs, \@inputdirs);	}#pass references to arrays
+
+print "\nExiting\n";
 
 #LOCAL SUBS--------------------------------------------------------------------
 sub OpenFileDirs {
