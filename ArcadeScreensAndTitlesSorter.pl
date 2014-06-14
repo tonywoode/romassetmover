@@ -11,8 +11,9 @@
 #use diagnostics;
 use strict;
 use warnings;
-use File::Find;
-use List::MoreUtils qw(uniq);
+
+use Data::Dumper;
+
 
 #the subs we share
 use ArcadeTools::Shared ('CheckInputs','RemoveTempDirs','OpChoice','Choice','SearchUniqInB','ScanLine','Copy','Report');
@@ -53,13 +54,16 @@ my ($copy ) 			= Choice();
 #we name the output files and folders by operation type
 my ($HAVEFILE, $MISSFILE, $COPYFILE) = OpenFileDirs($output_dir_root, $optype);
 
-my @uniq_in_target = SearchUniqInB($filetype, $HAVEFILE, $MISSFILE, @inputdirs);
-
+my %uniq_in_target = SearchUniqInB($filetype, $HAVEFILE, $MISSFILE, @inputdirs);
 
 
 #foreach my $keys (keys %files2) { push @menu_array, $keys };
-print "here are the files that aren't in MAME: @uniq_in_target";            
+print "here are the files that aren't in MAME: %uniq_in_target";            
 #for each my $keys (@uniq)in_target) { push @
+
+print Dumper(\%uniq_in_target);
+
+CloseFileDirs();
 
 
 #LOCAL SUBS--------------------------------------------------------------------
