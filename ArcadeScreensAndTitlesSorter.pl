@@ -15,7 +15,7 @@ use File::Find;
 use List::MoreUtils qw(uniq);
 
 #the subs we share
-use ArcadeTools::Shared ('CheckInputs','RemoveTempDirs','OpChoice','Choice','ParseQPFile','ScanLine','Copy','Report');
+use ArcadeTools::Shared ('CheckInputs','RemoveTempDirs','OpChoice','Choice','SearchUniqInB','ScanLine','Copy','Report');
 
 my $SEVEN_ZIP_PATH = 'C:\Program Files\7-Zip\7z.exe';
 
@@ -56,33 +56,7 @@ my ($HAVEFILE, $MISSFILE, $COPYFILE) = OpenFileDirs($output_dir_root, $optype);
 my @uniq_in_target = SearchUniqInB($filetype, $HAVEFILE, $MISSFILE, @inputdirs);
 
 
-sub SearchUniqInB{
-	my ($filetype, $HAVEFILE, $MISSFILE, @inputdirs) = @_;
-	#we scan for the roms in the input, report what we found, and copy if appropriate
-	my (%files1, %files2);
-	find(\&find_txt, $inputdirs[0]); #neither sub or wanted-> contrstucts would put filename in key and fullpath in value
-	find(\&find_txt2, $inputdirs[1]);
 
-	my @all = uniq(keys %files1, keys %files2);
-	my @uniq_in_target;
-	
-	sub find_txt  { if ($File::Find::name =~ /$filetype$/ && -f ) { $files1{$_} = $File::Find::name; } }
-	sub find_txt2 { if ($File::Find::name =~ /$filetype$/ && -f ) { $files2{$_} = $File::Find::name ; } }
-	
-	for my $file (@all) {
-		if ($files1{$file} && $files2{$file} && $file ne '.') { #file exists in both dirs
-			print $HAVEFILE "$file is in both dirs\n";
-		}
-		elsif ($files1{$file}) { #file only existsn in dir 1
-			print $HAVEFILE "$file is in $inputdirs[0] and not in $inputdirs[1]\n";
-		}
-		else { #file only exists in dir 2
-			print $MISSFILE "$file is in $inputdirs[1] and not in $inputdirs[0]\n";
-			push @uniq_in_target, $files2{$file};
-		}
-	}
-	return @uniq_in_target
-}
 #foreach my $keys (keys %files2) { push @menu_array, $keys };
 print "here are the files that aren't in MAME: @uniq_in_target";            
 #for each my $keys (@uniq)in_target) { push @

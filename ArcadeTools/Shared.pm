@@ -6,9 +6,11 @@ package ArcadeTools::Shared;
 use File::Copy qw(copy);
 use File::Path qw(make_path remove_tree);
 use File::Basename;
+use File::Find;
+use List::MoreUtils qw(uniq);
 
 use base 'Exporter';
-our @EXPORT_OK = ('CheckInputs','RemoveTempDirs','OpChoice','Choice','ParseQPFile','ScanLine','Copy','Report');
+our @EXPORT_OK = ('CheckInputs','RemoveTempDirs','OpChoice','Choice','ParseQPFile', 'SearchUniqInB','ScanLine','Copy','Report');
 
 sub OpChoice{
 	my %filetypes = @_; #all we neeed is a list of filetypes and user input
@@ -127,6 +129,34 @@ sub ScanLine {#need a line of romdata, a line format, a directory the files are 
 		} 
 	return $foundpath, $mamename, $parent, $found_index; #give back the path, and some less important stuff for reporting
 	}
+}
+
+sub SearchUniqInB{
+	my ($filetype, $HAVEFILE, $MISSFILE, @inputdirs) = @_;
+	#we scan for the roms in the input, report what we found, and copy if appropriate
+	my (%files1, %files2);
+	find(sub { if ($File::Find::name =~ /$filetype$/ && -f ) { $files1{$_} = $File::Find::name; } }, $inputdirs[0]); #wanted-> construct put fullpath in value AND key?!?
+	find(sub { if ($File::Find::name =~ /$filetype$/ && -f ) { $files2{$_} = $File::Find::name; } }, $inputdirs[1]);
+
+	my @all = uniq(keys %files1, keys %files2);
+	my @uniq_in_target;
+	
+#	sub find_txt  { if ($File::Find::name =~ /$filetype$/ && -f ) { $files1{$_} = $File::Find::name; } }
+#	sub find_txt2 { if ($File::Find::name =~ /$filetype$/ && -f ) { $files2{$_} = $File::Find::name ; } }
+	
+	for my $file (@all) {
+		if ($files1{$file} && $files2{$file} && $file ne '.') { #file exists in both dirs
+			print $HAVEFILE "$file is in both dirs\n";
+		}
+		elsif ($files1{$file}) { #file only existsn in dir 1
+			print $HAVEFILE "$file is in $inputdirs[0] and not in $inputdirs[1]\n";
+		}
+		else { #file only exists in dir 2
+			print $MISSFILE "$file is in $inputdirs[1] and not in $inputdirs[0]\n";
+			push @uniq_in_target, $files2{$file};
+		}
+	}
+	return @uniq_in_target
 }
 
 sub Report {
