@@ -12,9 +12,6 @@
 use strict;
 use warnings;
 
-use Data::Dumper;
-
-
 #the subs we share
 use ArcadeTools::Shared ('CheckInputs','RemoveTempDirs','OpChoice','Choice','SearchUniqInB','ScanLine','Copy','Report');
 
@@ -46,7 +43,6 @@ if ($invalid_input) { # if there was a problem, get rid of any work done so far.
 #What are we doing and what filetype does that mean we'll look for?	
 my ($optype, $filetype) = OpChoice(%filetypes);
 
-
 #are we copying or not?
 print "Simulate by default (just hit return), or enter '1' now to COPY\t";
 my ($copy ) 			= Choice();	
@@ -56,15 +52,15 @@ my ($HAVEFILE, $MISSFILE, $COPYFILE) = OpenFileDirs($output_dir_root, $optype);
 
 my %uniq_in_target = SearchUniqInB($filetype, $HAVEFILE, $MISSFILE, @inputdirs);
 
-
-#foreach my $keys (keys %files2) { push @menu_array, $keys };
-print "here are the files that aren't in MAME: %uniq_in_target";            
-#for each my $keys (@uniq)in_target) { push @
-
-print Dumper(\%uniq_in_target);
+if ( $copy && (keys %uniq_in_target != 0) ) { #if we found something and chose to copy
+	while ( my ($key, $value) = each(%uniq_in_target) ) {
+			my $foundpath = $value;
+			my $mamename = $key; #actually it becomes filename as we include a file extension in these keys, hence we send nothing as filetype
+			Copy($COPYFILE, $output_dir_root, $optype, 0, $foundpath, $mamename, ''); #Parent is false as we aren't thinking about parernt/child
+	}
+}
 
 CloseFileDirs();
-
 
 #LOCAL SUBS--------------------------------------------------------------------
 sub OpenFileDirs {
