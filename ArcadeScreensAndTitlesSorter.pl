@@ -45,6 +45,7 @@ if ($invalid_input) { # if there was a problem, get rid of any work done so far.
 #What are we doing and what filetype does that mean we'll look for?	
 my ($optype, $filetype) = OpChoice(%filetypes);
 
+
 #are we copying or not?
 print "Simulate by default (just hit return), or enter '1' now to COPY\t";
 my ($copy ) 			= Choice();	
@@ -52,85 +53,39 @@ my ($copy ) 			= Choice();
 #we name the output files and folders by operation type
 my ($HAVEFILE, $MISSFILE, $COPYFILE) = OpenFileDirs($output_dir_root, $optype);
 
-#we scan for the roms in the input, report what we found, and copy if appropriate
-my (%files1, %files2);
-
-find(\&find_txt, $inputdirs[0]);
-find(\&find_txt2, $inputdirs[1]);
-#find( sub { -f, $files1{$_} = $File::Find::name }, $inputdirs[0]);
-#find( sub { -f, $files2{$_} = $File::Find::name }, $inputdirs[1]);
-
-my @all = uniq(keys %files1, keys %files2);
-my @uniq_files;
+my @uniq_in_target = SearchUniqInB($filetype, $HAVEFILE, $MISSFILE, @inputdirs);
 
 
-sub find_txt {  
-	my $F = $File::Find::name;
-    if ($F =~ /png$/ && -f ) {
-	$files1{$_} = $File::Find::name; 
-        print "Seen\t$F\n";
-    }
-}
+sub SearchUniqInB{
+	my ($filetype, $HAVEFILE, $MISSFILE, @inputdirs) = @_;
+	#we scan for the roms in the input, report what we found, and copy if appropriate
+	my (%files1, %files2);
+	find(\&find_txt, $inputdirs[0]); #neither sub or wanted-> contrstucts would put filename in key and fullpath in value
+	find(\&find_txt2, $inputdirs[1]);
 
-sub find_txt2 {
-    my $F = $File::Find::name;
-    if ($F =~ /png$/ && -f ) {
-	$files2{$_} = $File::Find::name ;
-        print "Seen\t$F\n";
-    }
-}
-
-for my $file (@all) {
-	if ($files1{$file} && $files2{$file} && $file ne '.') { #file exists in both dirs
-		print $HAVEFILE "$file is in both dirs\n";#$result = qx(usr/bin/diff -q $files1{$file} $files2{$file}); #...etc
+	my @all = uniq(keys %files1, keys %files2);
+	my @uniq_in_target;
+	
+	sub find_txt  { if ($File::Find::name =~ /$filetype$/ && -f ) { $files1{$_} = $File::Find::name; } }
+	sub find_txt2 { if ($File::Find::name =~ /$filetype$/ && -f ) { $files2{$_} = $File::Find::name ; } }
+	
+	for my $file (@all) {
+		if ($files1{$file} && $files2{$file} && $file ne '.') { #file exists in both dirs
+			print $HAVEFILE "$file is in both dirs\n";
+		}
+		elsif ($files1{$file}) { #file only existsn in dir 1
+			print $HAVEFILE "$file is in $inputdirs[0] and not in $inputdirs[1]\n";
+		}
+		else { #file only exists in dir 2
+			print $MISSFILE "$file is in $inputdirs[1] and not in $inputdirs[0]\n";
+			push @uniq_in_target, $files2{$file};
+		}
 	}
-	elsif ($files1{$file}) { #file only existsn in dir 1
-		print $HAVEFILE "$file is in $inputdirs[0] and not in $inputdirs[1]\n";
-	}
-	else { #file only exists in dir 2
-		print $MISSFILE "$file is in $inputdirs[1] and not in $inputdirs[0]\n";
-		push @uniq_files, $file;
-	}
+	return @uniq_in_target
 }
-print "here are the files that aren't in MAME: @uniq_files";            
-
-
-
-
-
-
-
-
-
-
-
-
-## Simple diff -r --brief replacement
-#opendir THISDIR, $inputdirs[1];
-#my @allFiles = readdir THISDIR;
-#closedir THISDIR;
-#
-##need some way of restricting to filetype really, else why are we bothering with filetype.....
-#
-#foreach (@allFiles) {
-#    if (-e "$inputdirs[1]/$_") {
-#		unless ($_ eq '.' || $_ eq '..') {
-#			print "$_ found in source $inputdirs[0] but not in target $inputdirs[1]\n";
-#		}
-#    }
-#}
-#print "\nFinished checking target\n";
-#
-#opendir SOURCEDIR, $inputdirs[1];
-#my @allSourceFiles = readdir SOURCEDIR;
-#foreach (@allSourceFiles) {
-#    unless (-e "$inputdirs[0]/$_") {
-#        print "$_ found in target directory $inputdirs[1] but not in source $inputdirs[0]\n";
-#    }
-#}
-
-
-
+#foreach my $keys (keys %files2) { push @menu_array, $keys };
+print "here are the files that aren't in MAME: @uniq_in_target";            
+#for each my $keys (@uniq)in_target) { push @
 
 
 #LOCAL SUBS--------------------------------------------------------------------
