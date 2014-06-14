@@ -25,8 +25,8 @@ undef $ARGV[0]? $output_dir_root = $ARGV[0] : $output_dir_root = 'F:\\Arcade\\TR
 
 ##### INPUT YOUR ASSET AND FILTYPES HERE ######
 my %full_filetypes = do 'Filetypes.txt'; my %filetypes;
-$filetypes{"Screens"} = @full_filetypes{"Screens"};
-$filetypes{"Titles"}  = @full_filetypes{"Titles"};
+$filetypes{"Screens"} = $full_filetypes{"Screens"};
+$filetypes{"Titles"}  = $full_filetypes{"Titles"};
 
 ##### Main program #####
 print "\n\n" . "*" x 30 . "\n\nArcade Moving tools for Screens and Titles\n\n" . "*" x 30 . "\n";
@@ -55,11 +55,30 @@ my ($HAVEFILE, $MISSFILE, $COPYFILE) = OpenFileDirs($output_dir_root, $optype);
 #we scan for the roms in the input, report what we found, and copy if appropriate
 my (%files1, %files2);
 
-find( sub { -f, $files1{$_} = $File::Find::name }, $inputdirs[0]);							
-find( sub { -f, $files2{$_} = $File::Find::name }, $inputdirs[1]);
+find(\&find_txt, $inputdirs[0]);
+find(\&find_txt2, $inputdirs[1]);
+#find( sub { -f, $files1{$_} = $File::Find::name }, $inputdirs[0]);
+#find( sub { -f, $files2{$_} = $File::Find::name }, $inputdirs[1]);
 
 my @all = uniq(keys %files1, keys %files2);
 my @uniq_files;
+
+
+sub find_txt {  
+	my $F = $File::Find::name;
+    if ($F =~ /png$/ && -f ) {
+	$files1{$_} = $File::Find::name; 
+        print "Seen\t$F\n";
+    }
+}
+
+sub find_txt2 {
+    my $F = $File::Find::name;
+    if ($F =~ /png$/ && -f ) {
+	$files2{$_} = $File::Find::name ;
+        print "Seen\t$F\n";
+    }
+}
 
 for my $file (@all) {
 	if ($files1{$file} && $files2{$file} && $file ne '.') { #file exists in both dirs
@@ -74,6 +93,17 @@ for my $file (@all) {
 	}
 }
 print "here are the files that aren't in MAME: @uniq_files";            
+
+
+
+
+
+
+
+
+
+
+
 
 ## Simple diff -r --brief replacement
 #opendir THISDIR, $inputdirs[1];
