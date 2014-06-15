@@ -72,7 +72,7 @@ sub CheckForZips {
 sub UnZip { #Uncompress zip archive at this array index, REPLACE the array index with the new loaction, flag theres a folder to delete at the end
 	my ($SEVEN_ZIP_PATH, $output_dir_root, $index, $name, @inputdirs) = @_; 
 	
-	my $unzip_dir = "$output_dir_root\\deleteme\\$name";
+	my $unzip_dir = "$output_dir_root\\deleteme\\$name\\$index";
 	print "\t$inputdirs[$index] is an archive file\n\tMade temp dir at $unzip_dir\nUnzipping...";
 	
 	my $output = `\"$SEVEN_ZIP_PATH\" -y e \"$inputdirs[$index]\" -o\"$unzip_dir\"`;		#https://uk.answers.yahoo.com/question/index?qid=20130128061122AAIubF5
