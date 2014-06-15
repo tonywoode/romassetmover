@@ -22,13 +22,19 @@ my ($inputfile, $output_dir_root);
 undef $ARGV[0]? $inputfile = $ARGV[0] 		: $inputfile = do 'Inputdatfile.txt'; #Input file = first cmd arg, else what's in that txt file...
 undef $ARGV[1]? $output_dir_root = $ARGV[1] : $output_dir_root = do 'Outputdir.txt';  #output dir is the 2nd cmd arg or what's in that txt file...
 
-my @inputdirs = do 'Inputdirs.txt';
-
 ##### INPUT YOUR ASSET AND FILTYPES IN AssetTypes_Filetypes.txt ######
 my %filetypes = do 'AssetTypes_Filetypes.txt';
 
 ##### Main program #####
+
 print "\n\n" . "*" x 30 . "\n\n Romdata Asset Matching Tool\n\n" . "*" x 30 . "\n\n";
+#What are we doing and what filetype does that mean we'll look for?	
+my ($optype, $filetype) = OpChoice(%filetypes);
+
+print 'reading Input Directories from Inputdirs_'.$optype.'.txt';
+
+my @inputdirs = do 'Inputdirs_'.$optype.'.txt';
+
 #First regurgitate your inputs and sort out any zips
 my ($removedir_ref, $inputdirs_ref, $invalid_input) = CheckInputs($SEVEN_ZIP_PATH, $inputfile, $output_dir_root, @inputdirs); 	
 my @removedirs = @$removedir_ref; @inputdirs = @$inputdirs_ref; #dereference the above arrays - first holds index of any folders to remove at the end.... 		
@@ -39,8 +45,7 @@ if ($invalid_input) { # if there was a problem, get rid of any work done so far.
 		die "Quit: One of the input dirs isn't reachable\n";
 	}
 
-#What are we doing and what filetype does that mean we'll look for?	
-my ($optype, $filetype) = OpChoice(%filetypes);
+
 
 #are we copying or not?
 print "Simulate by default (just hit return), or enter '1' now to COPY\t";

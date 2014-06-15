@@ -29,8 +29,9 @@ $filetypes{"Titles"}  = $full_filetypes{"Titles"};
 ##### Main program #####
 print "\n\n" . "*" x 35 . "\n\nArcade Moving tool: Screens\\Titles\n\n" . "*" x 35 . "\n";
 print "\n***I'll only consider first 2 paths in inputdirs, and assets Screens/Titles***\n\n";
-my @allinputdirs = do 'Inputdirs.txt'; my @inputdirs;
+my @allinputdirs = do 'ArcadeScreensAndTitlesSorter_Inputdirs.txt'; my @inputdirs;
 $inputdirs[0] = $allinputdirs[0]; $inputdirs[1] = $allinputdirs[1];
+
 my ($removedir_ref, $inputdirs_ref, $invalid_input) = CheckInputs($SEVEN_ZIP_PATH, "not relevant", $output_dir_root, @inputdirs);
 my @removedirs = @$removedir_ref; @inputdirs = @$inputdirs_ref; #dereference the above arrays - first holds index of any folders to remove at the end.... 		
 

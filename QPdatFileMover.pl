@@ -54,7 +54,7 @@ while (my $line = <$INPUTDATFILE> ) {
 			printf "%-50s %10u", "\nnumber of mamenames copied:\t", ( defined $there ? 	  "$there" : "0" );
 		}
 		else {
-			print $MISSFILE "Error copying $mamename from $foundpath to $outputfile\n";
+			print $MISSFILE "Error copying $mamename from $foundpath\n";
 			$notthere++;
 		printf "%-46s %10u", "\nnumber of mamenames not copied:\t", ( defined $notthere ? "$notthere" : "0" );
 		}

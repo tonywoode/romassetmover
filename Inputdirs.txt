@@ -1,5 +1,0 @@
-#no trailing \ please!!!!
-'F:\Arcade\MAME\mameui\titles\Titles.zip',
-'F:\Arcade\TITLES\FBA_nonMAME_titles',
-'F:\Sega Games\HazeMD\HazeMD\titles\titles.zip',
-'F:\Arcade\TITLES\Winkawaks_NONMAME_titles',
