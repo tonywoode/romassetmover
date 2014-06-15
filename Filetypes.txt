@@ -1,4 +1,0 @@
-"Screens" => ".png",
-"Titles"  => ".png",
-"Icons"   => ".ico",
-"Roms"    => ".zip",
