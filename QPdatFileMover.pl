@@ -1,6 +1,8 @@
 #"C:\Perl64\bin\perl.exe" -w
 #
 # This is intented to move all the files in the filepath field of a QP romdata to a common directory. To UN-LoqiqX a set of arcade roms
+# It does NOT look inside zips, meaning it just moves bare romnames. You'll have to RomCentre the result against an arcade set dat to get
+# A working set.
 # We open a romdata.dat, on each line find the path field, and copy that field to a common directory, using the name ROMS
 #
 #use diagnostics;

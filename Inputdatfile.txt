@@ -1,2 +1,2 @@
 #This is the input QuickPlay dat file to use. Don't worry we won't hurt it. No trailing \ please....
-'C:\Emulators\QUICKPLAY\qp\data\Arcade\WinKawaks\ROMData.dat'
+'C:\Emulators\QUICKPLAY\qp\data\Arcade\Raine\ROMdata.dat'

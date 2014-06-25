@@ -1,4 +1,5 @@
 #no trailing \ please!!!!
+'F:\Arcade\SCREENSHOTS\MODEL2_NONMAME_SCREENSHOTS',
 'F:\Arcade\SCREENSHOTS\Winkawaks_NONMAME_screenshots',
 'F:\Arcade\MAME\mameui\snap\snap.zip',
 'F:\Arcade\SCREENSHOTS\Raine_NONMAME_Screenshots',
@@ -7,5 +8,5 @@
 'F:\Arcade\SCREENSHOTS\Zinc_NONmame_screenshots',
 'F:\Arcade\SCREENSHOTS\FBA_nonMAME_screenshots',
 'F:\Arcade\SCREENSHOTS\Model_3_Screenshots',
-'F:\Arcade\MODEL2_unused_extras\MODEL2_SCREENSHOTS_CLEAN',
+
 
