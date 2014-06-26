@@ -1,8 +1,10 @@
 #"C:\Perl64\bin\perl.exe" -w
 #
-# ArcadeSupersetMover.pl will create standalone assets for arcade systems. In QuickPlay frontend, ROMS CAN be standalone (and probably SHOULD be),
+# ArcadeSScreens and Titles sorter ensures that there is "supplemetary" folder screens and title files that are in a non-mame set and aren't in mame's assets.
+#   Its use is so we don't have duplicate screenshots displaying in Quickplay frontend: In QuickPlay, ROMS CAN be standalone (and probably SHOULD be),
 # 	and Icons are standalone (though can be in a shared folder, but probably shouldn't be). Screens and Titles as assets though, WILL display dupes
-# 	if they aren't unique.
+# 	if they aren't unique since all arcade systems are (and should be) collected under the system namespace "arcade". So if you have a full set of screenshots 
+#   for Mame, and a full set of screenshots for your other arcader set, this script ensures you have a folder of screens or titles that are "supplementary" to Mame 
 #
 # So this script simply does an AB comparison and moves to C: A is our Mame asset folder, B is our Set's asset folder. 
 #   Any unique names found in B that aren't in A will get moved to C. Once again we must deal with zips and 7zips as inputs, and clear them up.
