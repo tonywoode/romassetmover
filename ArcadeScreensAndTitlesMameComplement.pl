@@ -1,6 +1,6 @@
 #"C:\Perl64\bin\perl.exe" -w
 #
-# ArcadeSScreens and Titles sorter ensures that there is "supplemetary" folder screens and title files that are in a non-mame set and aren't in mame's assets.
+# ArcadeSScreens and Titles Mame Complement ensures that there is "supplemetary" folder screens and title files that are in a non-mame set and aren't in mame's assets.
 #   Its use is so we don't have duplicate screenshots displaying in Quickplay frontend: In QuickPlay, ROMS CAN be standalone (and probably SHOULD be),
 # 	and Icons are standalone (though can be in a shared folder, but probably shouldn't be). Screens and Titles as assets though, WILL display dupes
 # 	if they aren't unique since all arcade systems are (and should be) collected under the system namespace "arcade". So if you have a full set of screenshots 
@@ -31,7 +31,7 @@ $filetypes{"Titles"}  = $full_filetypes{"Titles"};
 ##### Main program #####
 print "\n\n" . "*" x 35 . "\n\nArcade Moving tool: Screens\\Titles\n\n" . "*" x 35 . "\n";
 print "\n***I'll only consider first 2 paths in inputdirs, and assets Screens/Titles***\n\n";
-my @allinputdirs = do 'ArcadeScreensAndTitlesSorter_Inputdirs.txt'; my @inputdirs;
+my @allinputdirs = do 'ArcadeScreensAndTitlesMameComplement_Inputdirs.txt'; my @inputdirs;
 $inputdirs[0] = $allinputdirs[0]; $inputdirs[1] = $allinputdirs[1];
 
 my ($removedir_ref, $inputdirs_ref, $invalid_input) = CheckInputs($SEVEN_ZIP_PATH, "not relevant", $output_dir_root, @inputdirs);

@@ -1,0 +1,3 @@
+#no trailing \ please!!!!
+'F:\Arcade\MAME\mame\snap',
+'F:\Arcade\FinalBurn_Alpha\Screens',

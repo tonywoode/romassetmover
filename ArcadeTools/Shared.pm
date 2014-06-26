@@ -135,8 +135,11 @@ sub SearchUniqInB{ #finds files in the second directory in the array that are no
 	my ($filetype, $HAVEFILE, $MISSFILE, @inputdirs) = @_;
 	#we scan for the roms in the input, report what we found, and copy if appropriate
 	my (%files1, %files2);
-	find(sub { if ($File::Find::name =~ /$filetype$/ && -f ) { $files1{$_} = $File::Find::name; } }, $inputdirs[0]); #wanted-> construct put fullpath in value AND key?!?
-	find(sub { if ($File::Find::name =~ /$filetype$/ && -f ) { $files2{$_} = $File::Find::name; } }, $inputdirs[1]);
+	#Find using an anonymous subroutine that includes files that exist and are e.g.:.png, but precludes any paths including "parentchild"
+	#  Why omit 'parentchild'? Because ArcadeSupersetMover.pl makes these assets and, to longterm defend against "mame-rom renaming frenzy", 
+	#  makes sure all child roms have a png in a subfolder "parentchild"
+	find(sub { if ($File::Find::name =~ /$filetype$/ && -f && $File::Find::dir !~ /parentchild/ ) { $files1{$_} = $File::Find::name; } }, $inputdirs[0]); #wanted-> construct put fullpath in value AND key?!?
+	find(sub { if ($File::Find::name =~ /$filetype$/ && -f && $File::Find::dir !~ /parentchild/ ) { $files2{$_} = $File::Find::name; } }, $inputdirs[1]);
 
 	my @all = uniq(keys %files1, keys %files2);
 	my %uniq_in_target;
