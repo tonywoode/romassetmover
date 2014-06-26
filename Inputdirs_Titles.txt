@@ -1,12 +1,11 @@
 #no trailing \ please!!!!
+'F:\Arcade\TITLES\FBA_nonMAME_titles',
+'F:\Arcade\MAME\mame0138\titles\Titles.zip',
+'F:\Arcade\FinalBurn_Alpha\fba\support\titles',
 'F:\Arcade\TITLES\MODEL2_NONMAME_TITLES',
-'F:\Arcade\MAME\mameui\titles\Titles.zip',
 'F:\Arcade\TITLES\Winkawaks_NONMAME_titles',
 'F:\Arcade\TITLES\Raine_NONMAME_Titles',
 'F:\Arcade\TITLES\Nebula_nonMAME_titles',
-'F:\Arcade\FinalBurn_Alpha\fba\support\titles',
-'F:\Arcade\TITLES\FBA_nonMAME_titles',
 'F:\Arcade\TITLES\M1_NONMAME_TITLES',
 'F:\Arcade\TITLES\Model3_Titles',
 'F:\Sega Games\HazeMD\HazeMD\titles\titles.zip',
-
